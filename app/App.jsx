@@ -7,17 +7,17 @@ import emailjs from '@emailjs/browser'
    EMAILJS CONFIG — Reemplaza con tus credenciales reales
    https://www.emailjs.com/
    ════════════════════════════════════════════════════════════ */
-const EMAILJS_SERVICE_ID = 'service_kajlicg'
-const EMAILJS_PUBLIC_KEY = 'yez38Ag9rM1ry57VY'
+const EMAILJS_SERVICE_ID = 'service_43d4j75'
+const EMAILJS_PUBLIC_KEY = 'lx2bES33rJekDrTgj'
 
 // Plantilla A — códigos OTP (registro y recuperar contraseña)
 // Basada en "One-Time Password" de EmailJS: usa {{passcode}}, {{time}}, {{email}}
-const EMAILJS_TEMPLATE_OTP = 'template_ce2v2df'
+const EMAILJS_TEMPLATE_OTP = 'template_kh42o2m'
 
 // Plantilla B — correos transaccionales con texto libre (cotización/presupuesto
 // y confirmación de pedido). Plantilla simple: Subject = {{subject}}, To Email =
 // {{to_email}}, Content = {{message}}
-const EMAILJS_TEMPLATE_GENERAL = 'template_yryrapn'
+const EMAILJS_TEMPLATE_GENERAL = 'template_4oi6jej'
 const EMAILJS_FROM_EMAIL = 'noreply.hernandezmuebles@gmail.com'
 
 
@@ -1427,7 +1427,7 @@ function PageAdmin({ cotizaciones, clientes, precios, onBack, onChangeEstado, on
 
   async function sendEmail() {
     if (!cot || !emailDraft.trim()) return
-    if (EMAILJS_TEMPLATE_COTIZACION === 'TU_TEMPLATE_GENERAL') {
+    if (EMAILJS_TEMPLATE_COTIZACION === 'template_4oi6jej') {
       alert('⚠️ Configura EMAILJS_TEMPLATE_GENERAL en App.jsx antes de enviar correos.\nCrea una plantilla en EmailJS (Subject={{subject}}, To Email={{to_email}}, Content={{message}}) y reemplaza la constante al inicio del archivo.')
       return
     }
