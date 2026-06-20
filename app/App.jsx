@@ -4,34 +4,24 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import emailjs from '@emailjs/browser'
 
 /* ════════════════════════════════════════════════════════════
-   EMAILJS CONFIG — Reemplaza con tus credenciales reales
-   https://www.emailjs.com/
+   EMAILJS CONFIG — NUEVAS CREDENCIALES
    ════════════════════════════════════════════════════════════ */
-const EMAILJS_SERVICE_ID = 'service_kajlicg'
-const EMAILJS_PUBLIC_KEY = 'yez38Ag9rM1ry57VY'
+const EMAILJS_SERVICE_ID = 'service_43d4j75'
+const EMAILJS_PUBLIC_KEY = 'lx2bES33rJekDrTgj'
+const EMAILJS_TEMPLATE_OTP = 'template_kh42o2m'
+const EMAILJS_TEMPLATE_GENERAL = 'template_4oi6jej'
 
-// Plantilla A — códigos OTP (registro y recuperar contraseña)
-// Basada en "One-Time Password" de EmailJS: usa {{passcode}}, {{time}}, {{email}}
-const EMAILJS_TEMPLATE_OTP = 'template_ce2v2df'
-
-// Plantilla B — correos transaccionales con texto libre (cotización/presupuesto
-// y confirmación de pedido). Plantilla simple: Subject = {{subject}}, To Email =
-// {{to_email}}, Content = {{message}}
-const EMAILJS_TEMPLATE_GENERAL = 'template_yryrapn'
-const EMAILJS_FROM_EMAIL = 'noreply.hernandezmuebles@gmail.com'
-
-
-// Alias para mantener compatibilidad con el resto del código
-const EMAILJS_TEMPLATE_REGISTRO     = EMAILJS_TEMPLATE_OTP
-const EMAILJS_TEMPLATE_RECUPERAR    = EMAILJS_TEMPLATE_OTP
-const EMAILJS_TEMPLATE_COTIZACION   = EMAILJS_TEMPLATE_GENERAL
+// Alias para mantener compatibilidad
+const EMAILJS_TEMPLATE_REGISTRO = EMAILJS_TEMPLATE_OTP
+const EMAILJS_TEMPLATE_RECUPERAR = EMAILJS_TEMPLATE_OTP
+const EMAILJS_TEMPLATE_COTIZACION = EMAILJS_TEMPLATE_GENERAL
 const EMAILJS_TEMPLATE_CONFIRMACION = EMAILJS_TEMPLATE_GENERAL
 
 /* ════════════════════════════════════════════════════════════
    DATOS GLOBALES / CONSTANTES
    ════════════════════════════════════════════════════════════ */
 
-const ADMIN_EMAIL    = 'joserhernandezmuebles@gmail.com'
+const ADMIN_EMAIL = 'noreply.hernandezmuebles@gmail.com'
 const ADMIN_PASSWORD = '1234'
 
 const ETAPAS = ['cotización', 'fabricación', 'entrega', 'entregado']
@@ -443,6 +433,62 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     return () => clearInterval(t)
   }, [forgotCooldown])
 
+  // ════════════════════════════════════════════════════════════
+  // FUNCIÓN PARA ENVIAR CÓDIGOS OTP
+  // ════════════════════════════════════════════════════════════
+  async function enviarCodigoOTP({
+    destinatario,
+    nombre,
+    codigo,
+    tiempo = '15 minutos',
+    mensajePersonalizado = '',
+    asunto = 'Código de verificación — Hernández Muebles'
+  }) {
+    try {
+      const mensajeBase = mensajePersonalizado || 'Hemos recibido tu solicitud.'
+      
+      const cuerpoMensaje = `Hola ${nombre},
+
+${mensajeBase}
+
+Tu código de verificación es:
+
+${codigo}
+
+Este código es válido por ${tiempo}.
+
+Si no solicitaste esto, ignora este mensaje.
+
+Hernández Muebles`
+
+      const templateParams = {
+        to_name: nombre,
+        to_email: destinatario,
+        from_name: 'Hernández Muebles',
+        from_email: 'noreply.hernandezmuebles@gmail.com',
+        reply_to: 'noreply.hernandezmuebles@gmail.com',
+        subject: asunto,
+        message: cuerpoMensaje,
+        passcode: codigo,
+        time: tiempo,
+        codigo: codigo,
+      }
+
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_OTP,
+        templateParams,
+        EMAILJS_PUBLIC_KEY
+      )
+      
+      return { success: true }
+      
+    } catch (err) {
+      console.error('EmailJS error:', err)
+      return { success: false, error: err }
+    }
+  }
+
   function doLogin() {
     const e = loginEmail.trim().toLowerCase(), p = loginPass.trim()
     if (!e || !p) { setErr('Completa todos los campos'); return }
@@ -460,90 +506,38 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     if (clientes.find(x => x.email === e)) { setRegErr('Este correo ya está registrado'); return false }
     return true
   }
-  async function enviarCodigoOTP({
-  destinatario,
-  nombre,
-  codigo,
-  tiempo = '15 minutos',
-  mensajePersonalizado = '',
-  
-  asunto = 'Código de verificación — Hernández Muebles'
-}) {
-  try {
-    const mensajeBase = mensajePersonalizado || 'Hemos recibido tu solicitud.'
-    
-    const cuerpoMensaje = `Hola ${nombre},
 
-${mensajeBase}
-
-Tu código de verificación es:
-
-${codigo}
-
-Este código es válido por ${tiempo}.
-
-Si no solicitaste esto, ignora este mensaje.
-
-Hernández Muebles`
-
-    const templateParams = {
-      to_name: nombre,
-      to_email: destinatario,
-      from_name: 'Hernández Muebles',
-      from_email: 'noreply.hernandezmuebles@gmail.com',
-      reply_to: 'noreply.hernandezmuebles@gmail.com',
-      subject: asunto,
-      message: cuerpoMensaje,
-      passcode: codigo,
-      time: tiempo,
-      codigo: codigo,
-    }
-
-    const response = await emailjs.send(
-      'service_kajlicg',           // Service ID
-      'template_ce2v2df',          // Template ID
-      templateParams,
-      'yez38Ag9rM1ry57VY'          // Public Key
-    )
-    
-    console.log('✅ Email enviado:', response)
-    return { success: true, response }
-    
-  } catch (err) {
-    console.error('❌ EmailJS error:', err)
-    return { success: false, error: err }
-  }
-
-}
   async function sendVerificationCode() {
-  const code = generarOTP()
-  setOtpSent(code)
-  setOtpErr('')
-  setSending(true)
-  
-  try {
-    const resultado = await enviarCodigoOTP({
-      destinatario: regEmail.trim().toLowerCase(),
-      nombre: regNombres.trim(),
-      codigo: code,
-      tiempo: '15 minutos',
-      mensajePersonalizado: 'Gracias por registrarte en Hernández Muebles.',
-      asunto: 'Código de verificación — Hernández Muebles'
-    })
-
-    if (!resultado.success) {
-      console.warn('Código de verificación:', code)
-      alert(`⚠️ No se pudo enviar el email.\nTu código de prueba es: ${code}`)
-    }
+    const code = generarOTP()
+    setOtpSent(code)
+    setOtpErr('')
+    setSending(true)
     
-  } catch (err) {
-    console.error('Error:', err)
-    alert(`❌ Error. Tu código de prueba es: ${code}`)
-  } finally {
-    setSending(false)
-    setResendCooldown(30)
+    try {
+      const resultado = await enviarCodigoOTP({
+        destinatario: regEmail.trim().toLowerCase(),
+        nombre: regNombres.trim(),
+        codigo: code,
+        tiempo: '15 minutos',
+        mensajePersonalizado: 'Gracias por registrarte en Hernández Muebles.',
+        asunto: 'Código de verificación — Hernández Muebles'
+      })
+
+      if (!resultado.success) {
+        console.warn('[EmailJS no configurado] Código de verificación:', code)
+        alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
+      } else {
+        console.log('✅ Código enviado a:', regEmail.trim().toLowerCase())
+      }
+      
+    } catch (err) {
+      console.error('Error al enviar código:', err)
+      alert(`❌ Error al enviar el código. Tu código de prueba es: ${code}`)
+    } finally {
+      setSending(false)
+      setResendCooldown(30)
+    }
   }
-}
 
   async function doRegisterStart() {
     if (!validateRegFields()) return
@@ -579,48 +573,48 @@ Hernández Muebles`
       email: regEmail.trim().toLowerCase(), teléfono: regTel,
       password: regPass.trim(), isAdmin: false, emailVerificado: true,
     })
+    onClose()
   }
 
   /* ── RECUPERAR CONTRASEÑA ── */
   async function sendForgotCode() {
-  const e = forgotEmail.trim().toLowerCase()
-  setForgotErr('')
-  if (!e) { setForgotErr('Ingresa tu correo electrónico.'); return }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setForgotErr('Ingresa un correo electrónico válido.'); return }
-  
-  const cli = clientes.find(x => x.email === e)
-  if (!cli) { setForgotErr('No encontramos una cuenta con ese correo.'); return }
+    const e = forgotEmail.trim().toLowerCase()
+    setForgotErr('')
+    if (!e) { setForgotErr('Ingresa tu correo electrónico.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setForgotErr('Ingresa un correo electrónico válido.'); return }
+    const cli = clientes.find(x => x.email === e)
+    if (!cli) { setForgotErr('No encontramos una cuenta con ese correo.'); return }
 
-  const code = generarOTP()
-  setForgotOtpSent(code)
-  setForgotOtpInputs(['', '', '', '', '', ''])
-  setForgotSending(true)
-  
-  try {
-    const resultado = await enviarCodigoOTP({
-      destinatario: e,
-      nombre: cli.nombres,
-      codigo: code,
-      tiempo: '15 minutos',
-      mensajePersonalizado: 'Recibimos una solicitud para restablecer tu contraseña.',
-      asunto: 'Recupera tu contraseña — Hernández Muebles'
-    })
+    const code = generarOTP()
+    setForgotOtpSent(code)
+    setForgotOtpInputs(['', '', '', '', '', ''])
+    setForgotSending(true)
+    
+    try {
+      const resultado = await enviarCodigoOTP({
+        destinatario: e,
+        nombre: cli.nombres,
+        codigo: code,
+        tiempo: '15 minutos',
+        mensajePersonalizado: 'Recibimos una solicitud para restablecer tu contraseña.',
+        asunto: 'Recupera tu contraseña — Hernández Muebles'
+      })
 
-    if (!resultado.success) {
-      console.warn('Código de recuperación:', code)
-      alert(`⚠️ No se pudo enviar el email.\nTu código de prueba es: ${code}`)
+      if (!resultado.success) {
+        console.warn('[EmailJS no configurado] Código de recuperación:', code)
+        alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
+      }
+      
+      setForgotSent(true)
+      
+    } catch (err) {
+      console.error('EmailJS error:', err)
+      setForgotErr('No se pudo enviar el correo. Intenta nuevamente.')
+    } finally {
+      setForgotSending(false)
+      setForgotCooldown(30)
     }
-    
-    setForgotSent(true)
-    
-  } catch (err) {
-    console.error('Error:', err)
-    setForgotErr('No se pudo enviar el correo. Intenta nuevamente.')
-  } finally {
-    setForgotSending(false)
-    setForgotCooldown(30)
   }
-}
 
   function handleForgotOtpChange(i, val) {
     const v = val.replace(/\D/g, '').slice(-1)
@@ -640,6 +634,7 @@ Hernández Muebles`
     if (forgotNewPass !== forgotNewPass2) { setForgotErr('Las contraseñas no coinciden.'); return }
     setForgotErr('')
     onResetPassword(forgotEmail.trim().toLowerCase(), forgotNewPass)
+    onClose()
     setForgotOk(true)
   }
 
@@ -797,7 +792,130 @@ Hernández Muebles`
       )}
     </Modal>
   )
-}
+
+    return (
+      <Modal onClose={onClose}>
+        <div className="anim-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ fontSize: 20, fontWeight: 800 }}>Recuperar contraseña</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}>✕</button>
+        </div>
+
+        {!forgotSent ? (
+          <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
+            <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+              Ingresa el correo con el que te registraste. Te enviaremos un código de 6 dígitos para crear una nueva contraseña.
+            </p>
+            {forgotErr && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{forgotErr}</div>}
+            <Field label="Correo electrónico" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="correo@ejemplo.cl" />
+            <Btn full onClick={sendForgotCode} disabled={forgotSending}>{forgotSending ? 'Enviando código...' : 'Enviar código'}</Btn>
+            <button onClick={backToLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12, alignSelf: 'center' }}>← Volver a iniciar sesión</button>
+          </div>
+        ) : (
+          <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
+            <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+              Enviamos un código de 6 dígitos a <b>{forgotEmail.trim().toLowerCase()}</b>. Ingrésalo junto con tu nueva contraseña.
+            </p>
+            <div className={`otp-row${forgotErr ? ' anim-shake' : ''}`}>
+              {forgotOtpInputs.map((v, i) => (
+                <input key={i} id={`forgot-otp-${i}`} className="otp-box" maxLength={1} inputMode="numeric"
+                  value={v} onChange={e => handleForgotOtpChange(i, e.target.value)}
+                  onKeyDown={e => handleForgotOtpKeyDown(i, e)} autoFocus={i === 0} />
+              ))}
+            </div>
+            <Field label="Nueva contraseña" type="password" value={forgotNewPass} onChange={e => setForgotNewPass(e.target.value)} placeholder="Mínimo 4 carácteres" />
+            <Field label="Confirmar nueva contraseña" type="password" value={forgotNewPass2} onChange={e => setForgotNewPass2(e.target.value)} placeholder="••••" />
+            {forgotErr && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{forgotErr}</div>}
+            <Btn full onClick={confirmResetPassword}>Restablecer contraseña</Btn>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+              <button onClick={backToLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12 }}>← Volver</button>
+              <button onClick={sendForgotCode} disabled={forgotSending || forgotCooldown > 0}
+                style={{ background: 'none', border: 'none', cursor: forgotCooldown > 0 ? 'default' : 'pointer', color: forgotCooldown > 0 ? '#aaa' : '#1a1a1a', fontWeight: 700, fontSize: 12 }}>
+                {forgotSending ? 'Enviando...' : forgotCooldown > 0 ? `Reenviar (${forgotCooldown}s)` : 'Reenviar código'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    )
+  }
+
+  /* ── PANTALLA DE VERIFICACIÓN ── */
+  if (verifying) {
+    return (
+      <Modal onClose={onClose}>
+        <div className="anim-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ fontSize: 20, fontWeight: 800 }}>Verifica tu correo</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}>✕</button>
+        </div>
+        <p className="anim-fade-up" style={{ fontSize: 13, color: '#666', marginBottom: 18, lineHeight: 1.6 }}>
+          Enviamos un código de 6 dígitos a <b>{regEmail.trim().toLowerCase()}</b>. Ingrésalo para activar tu cuenta.
+        </p>
+        <div className={`anim-fade-up otp-row${otpErr ? ' anim-shake' : ''}`} style={{ marginBottom: 14 }}>
+          {otpInputs.map((v, i) => (
+            <input key={i} id={`otp-${i}`} className="otp-box" maxLength={1} inputMode="numeric"
+              value={v} onChange={e => handleOtpChange(i, e.target.value)}
+              onKeyDown={e => handleOtpKeyDown(i, e)} autoFocus={i === 0} />
+          ))}
+        </div>
+        {otpErr && <div className="anim-fade-up" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828', marginBottom: 12 }}>{otpErr}</div>}
+        <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Btn full onClick={confirmOtp}>Verificar y crear cuenta</Btn>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#888' }}>
+            <button onClick={() => setVerifying(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12 }}>← Volver</button>
+            <button onClick={sendVerificationCode} disabled={sending || resendCooldown > 0}
+              style={{ background: 'none', border: 'none', cursor: resendCooldown > 0 ? 'default' : 'pointer', color: resendCooldown > 0 ? '#aaa' : '#1a1a1a', fontWeight: 700, fontSize: 12 }}>
+              {sending ? 'Enviando...' : resendCooldown > 0 ? `Reenviar (${resendCooldown}s)` : 'Reenviar código'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 20, fontWeight: 800 }}>Acceso</span>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}>✕</button>
+      </div>
+      <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,.06)', borderRadius: 10, padding: 4, marginBottom: 16 }}>
+        <Tab id="login" label="Iniciar sesión" />
+        <Tab id="register" label="Registrarse" />
+      </div>
+
+      {tab === 'login' && (
+        <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ background: 'rgba(26,26,26,.12)', border: '1px solid rgba(26,26,26,.25)', borderRadius: 8, padding: '10px 12px', fontSize: 12, lineHeight: 1.5 }}>
+            💡 <b>Demo:</b> cliente@demo.cl · Contraseña: 1234
+          </div>
+          {err && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{err}</div>}
+          <Field label="Correo electrónico" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="correo@ejemplo.cl" />
+          <Field label="Contraseña" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••" />
+          <button onClick={() => setForgotMode(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12, alignSelf: 'flex-end', marginTop: -6 }}>¿Olvidaste tu contraseña?</button>
+          <Btn full onClick={doLogin}>Iniciar sesión</Btn>
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#666' }}>
+            ¿No tienes cuenta? <a href="#" onClick={e => { e.preventDefault(); setTab('register') }} style={{ color: '#1a1a1a', fontWeight: 700 }}>Regístrate</a>
+          </p>
+        </div>
+      )}
+
+      {tab === 'register' && (
+        <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {regErr && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{regErr}</div>}
+          <Field label="Nombres" value={regNombres} onChange={e => setRegNombres(e.target.value)} placeholder="Ej: Juan Carlos" />
+          <Field label="Apellidos" value={regApellidos} onChange={e => setRegApellidos(e.target.value)} placeholder="Ej: Pérez González" />
+          <Field label="Correo electrónico" type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="correo@ejemplo.cl" />
+          <Field label="Teléfono" value={regTel} onChange={e => setRegTel(formatPhone(e.target.value))} placeholder="+56 9 1234 5678" />
+          <Field label="Contraseña" type="password" value={regPass} onChange={e => setRegPass(e.target.value)} placeholder="Mínimo 4 carácteres" />
+          <Btn full onClick={doRegisterStart} disabled={sending}>{sending ? 'Enviando código...' : 'Crear cuenta'}</Btn>
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#666' }}>
+            ¿Ya tienes cuenta? <a href="#" onClick={e => { e.preventDefault(); setTab('login') }} style={{ color: '#1a1a1a', fontWeight: 700 }}>Inicia sesión</a>
+          </p>
+        </div>
+      )}
+    </Modal>
+  )
+
 
 /* ════════════════════════════════════════════════════════════
    NAV
