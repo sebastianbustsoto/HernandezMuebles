@@ -1460,7 +1460,7 @@ function PageAdmin({ cotizaciones, clientes, precios, onBack, onChangeEstado, on
   // Correo de confirmación de pedido (formato tipo "Order Confirmation", en texto plano)
   async function sendConfirmacionPedido() {
     if (!cot) return
-    if (EMAILJS_TEMPLATE_CONFIRMACION === 'TU_TEMPLATE_GENERAL') {
+    if (EMAILJS_TEMPLATE_CONFIRMACION === 'template_4oi6jej') {
       alert('⚠️ Configura EMAILJS_TEMPLATE_GENERAL en App.jsx antes de enviar correos.\nCrea una plantilla en EmailJS (Subject={{subject}}, To Email={{to_email}}, Content={{message}}) y reemplaza la constante al inicio del archivo.')
       return
     }
