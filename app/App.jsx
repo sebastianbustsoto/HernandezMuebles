@@ -466,7 +466,7 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
   codigo,
   tiempo = '15 minutos',
   mensajePersonalizado = '',
-  templateId = EMAILJS_TEMPLATE_OTP,
+  
   asunto = 'Código de verificación — Hernández Muebles'
 }) {
   try {
@@ -490,8 +490,8 @@ Hernández Muebles`
       to_name: nombre,
       to_email: destinatario,
       from_name: 'Hernández Muebles',
-      from_email: EMAILJS_FROM_EMAIL,
-      reply_to: EMAILJS_FROM_EMAIL,
+      from_email: 'noreply.hernandezmuebles@gmail.com',
+      reply_to: 'noreply.hernandezmuebles@gmail.com',
       subject: asunto,
       message: cuerpoMensaje,
       passcode: codigo,
@@ -499,19 +499,21 @@ Hernández Muebles`
       codigo: codigo,
     }
 
-    await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      templateId,
+    const response = await emailjs.send(
+      'service_kajlicg',           // Service ID
+      'template_ce2v2df',          // Template ID
       templateParams,
-      EMAILJS_PUBLIC_KEY
+      'yez38Ag9rM1ry57VY'          // Public Key
     )
     
-    return { success: true }
+    console.log('✅ Email enviado:', response)
+    return { success: true, response }
+    
   } catch (err) {
-    console.error('EmailJS error:', err)
+    console.error('❌ EmailJS error:', err)
     return { success: false, error: err }
   }
-  
+
 }
   async function sendVerificationCode() {
   const code = generarOTP()
@@ -530,15 +532,13 @@ Hernández Muebles`
     })
 
     if (!resultado.success) {
-      console.warn('[EmailJS no configurado] Código de verificación:', code)
-      alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
-    } else {
-      console.log('✅ Código enviado a:', regEmail.trim().toLowerCase())
+      console.warn('Código de verificación:', code)
+      alert(`⚠️ No se pudo enviar el email.\nTu código de prueba es: ${code}`)
     }
     
   } catch (err) {
-    console.error('Error al enviar código:', err)
-    alert(`❌ Error al enviar el código. Tu código de prueba es: ${code}`)
+    console.error('Error:', err)
+    alert(`❌ Error. Tu código de prueba es: ${code}`)
   } finally {
     setSending(false)
     setResendCooldown(30)
@@ -607,14 +607,14 @@ Hernández Muebles`
     })
 
     if (!resultado.success) {
-      console.warn('[EmailJS no configurado] Código de recuperación:', code)
-      alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
+      console.warn('Código de recuperación:', code)
+      alert(`⚠️ No se pudo enviar el email.\nTu código de prueba es: ${code}`)
     }
     
     setForgotSent(true)
     
   } catch (err) {
-    console.error('EmailJS error:', err)
+    console.error('Error:', err)
     setForgotErr('No se pudo enviar el correo. Intenta nuevamente.')
   } finally {
     setForgotSending(false)
