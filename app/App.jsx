@@ -7,19 +7,17 @@ import emailjs from '@emailjs/browser'
    EMAILJS CONFIG — Reemplaza con tus credenciales reales
    https://www.emailjs.com/
    ════════════════════════════════════════════════════════════ */
-const EMAILJS_SERVICE_ID = 'service_43d4j75'
-const EMAILJS_PUBLIC_KEY = 'lx2bES33rJekDrTgj'
+const EMAILJS_SERVICE_ID = 'service_kajlicg'
+const EMAILJS_PUBLIC_KEY = 'yez38Ag9rM1ry57VY'
 
 // Plantilla A — códigos OTP (registro y recuperar contraseña)
 // Basada en "One-Time Password" de EmailJS: usa {{passcode}}, {{time}}, {{email}}
-const EMAILJS_TEMPLATE_OTP = 'template_kh42o2m'
+const EMAILJS_TEMPLATE_OTP = 'template_ce2v2df'
 
 // Plantilla B — correos transaccionales con texto libre (cotización/presupuesto
 // y confirmación de pedido). Plantilla simple: Subject = {{subject}}, To Email =
 // {{to_email}}, Content = {{message}}
-const EMAILJS_TEMPLATE_GENERAL = 'template_4oi6jej'
-const EMAILJS_FROM_EMAIL = 'noreply.hernandezmuebles@gmail.com'
-
+const EMAILJS_TEMPLATE_GENERAL = 'template_yryrapn'
 
 // Alias para mantener compatibilidad con el resto del código
 const EMAILJS_TEMPLATE_REGISTRO     = EMAILJS_TEMPLATE_OTP
@@ -460,88 +458,45 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     if (clientes.find(x => x.email === e)) { setRegErr('Este correo ya está registrado'); return false }
     return true
   }
-  async function enviarCodigoOTP({
-  destinatario,
-  nombre,
-  codigo,
-  tiempo = '15 minutos',
-  mensajePersonalizado = '',
-  templateId = EMAILJS_TEMPLATE_OTP,
-  asunto = 'Código de verificación — Hernández Muebles'
-}) {
-  try {
-    const mensajeBase = mensajePersonalizado || 'Hemos recibido tu solicitud.'
-    
-    const cuerpoMensaje = `Hola ${nombre},
 
-${mensajeBase}
-
-Tu código de verificación es:
-
-${codigo}
-
-Este código es válido por ${tiempo}.
-
-Si no solicitaste esto, ignora este mensaje.
-
-Hernández Muebles`
-
-    const templateParams = {
-      to_name: nombre,
-      to_email: destinatario,
-      from_name: 'Hernández Muebles',
-      from_email: EMAILJS_FROM_EMAIL,
-      reply_to: EMAILJS_FROM_EMAIL,
-      subject: asunto,
-      message: cuerpoMensaje,
-      passcode: codigo,
-      time: tiempo,
-      codigo: codigo,
-    }
-
-    await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      templateId,
-      templateParams,
-      EMAILJS_PUBLIC_KEY
-    )
-    
-    return { success: true }
-  } catch (err) {
-    console.error('EmailJS error:', err)
-    return { success: false, error: err }
-  }
-  
-}
   async function sendVerificationCode() {
-  const code = generarOTP()
-  setOtpSent(code)
-  setOtpErr('')
-  setSending(true)
-  
-  try {
-    const resultado = await enviarCodigoOTP({
-      destinatario: regEmail.trim().toLowerCase(),
-      nombre: regNombres.trim(),
-      codigo: code,
-      tiempo: '15 minutos',
-      mensajePersonalizado: 'Gracias por registrarte en Hernández Muebles.',
-      asunto: 'Código de verificación — Hernández Muebles'
-    })
-
-    if (!resultado.success) {
-      console.warn('Código de verificación:', code)
-      alert(`⚠️ No se pudo enviar el email.\nTu código de prueba es: ${code}`)
+    const code = generarOTP()
+    setOtpSent(code)
+    setOtpErr('')
+    setSending(true)
+    try {
+      if (EMAILJS_TEMPLATE_REGISTRO !== 'TU_TEMPLATE_REGISTRO') {
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_REGISTRO,
+          {
+            // Variables del template "One-Time Password" de EmailJS
+            passcode:  code,
+            time:      '15 minutos',
+            email:     regEmail.trim().toLowerCase(),
+            // Variables propias / compatibilidad
+            to_name:   regNombres.trim(),
+            to_email:  regEmail.trim().toLowerCase(),
+            from_name: 'Hernández Muebles',
+            reply_to:  ADMIN_EMAIL,
+            subject:   'Código de verificación — Hernández Muebles',
+            message:   `Hola ${regNombres.trim()},\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para confirmar tu correo y activar tu cuenta.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
+            codigo:    code,
+          },
+          EMAILJS_PUBLIC_KEY
+        )
+      } else {
+        // Sin credenciales configuradas: mostrar el código para pruebas
+        console.warn('[EmailJS no configurado] Código de verificación:', code)
+        alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
+      }
+    } catch (err) {
+      console.error('EmailJS error:', err)
+    } finally {
+      setSending(false)
+      setResendCooldown(30)
     }
-    
-  } catch (err) {
-    console.error('Error:', err)
-    alert(`❌ Error. Tu código de prueba es: ${code}`)
-  } finally {
-    setSending(false)
-    setResendCooldown(30)
   }
-}
 
   async function doRegisterStart() {
     if (!validateRegFields()) return
@@ -581,44 +536,51 @@ Hernández Muebles`
 
   /* ── RECUPERAR CONTRASEÑA ── */
   async function sendForgotCode() {
-  const e = forgotEmail.trim().toLowerCase()
-  setForgotErr('')
-  if (!e) { setForgotErr('Ingresa tu correo electrónico.'); return }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setForgotErr('Ingresa un correo electrónico válido.'); return }
-  
-  const cli = clientes.find(x => x.email === e)
-  if (!cli) { setForgotErr('No encontramos una cuenta con ese correo.'); return }
+    const e = forgotEmail.trim().toLowerCase()
+    setForgotErr('')
+    if (!e) { setForgotErr('Ingresa tu correo electrónico.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setForgotErr('Ingresa un correo electrónico válido.'); return }
+    const cli = clientes.find(x => x.email === e)
+    if (!cli) { setForgotErr('No encontramos una cuenta con ese correo.'); return }
 
-  const code = generarOTP()
-  setForgotOtpSent(code)
-  setForgotOtpInputs(['', '', '', '', '', ''])
-  setForgotSending(true)
-  
-  try {
-    const resultado = await enviarCodigoOTP({
-      destinatario: e,
-      nombre: cli.nombres,
-      codigo: code,
-      tiempo: '15 minutos',
-      mensajePersonalizado: 'Recibimos una solicitud para restablecer tu contraseña.',
-      asunto: 'Recupera tu contraseña — Hernández Muebles'
-    })
-
-    if (!resultado.success) {
-      console.warn('Código de recuperación:', code)
-      alert(`⚠️ No se pudo enviar el email.\nTu código de prueba es: ${code}`)
+    const code = generarOTP()
+    setForgotOtpSent(code)
+    setForgotOtpInputs(['', '', '', '', '', ''])
+    setForgotSending(true)
+    try {
+      if (EMAILJS_TEMPLATE_RECUPERAR !== 'TU_TEMPLATE_RECUPERAR') {
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_RECUPERAR,
+          {
+            // Variables del template "One-Time Password" de EmailJS
+            passcode:  code,
+            time:      '15 minutos',
+            email:     e,
+            // Variables propias / compatibilidad
+            to_name:   cli.nombres,
+            to_email:  e,
+            from_name: 'Hernández Muebles',
+            reply_to:  ADMIN_EMAIL,
+            subject:   'Recupera tu contraseña — Hernández Muebles',
+            message:   `Hola ${cli.nombres},\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para crear una nueva contraseña.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
+            codigo:    code,
+          },
+          EMAILJS_PUBLIC_KEY
+        )
+      } else {
+        console.warn('[EmailJS no configurado] Código de recuperación:', code)
+        alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
+      }
+      setForgotSent(true)
+    } catch (err) {
+      console.error('EmailJS error:', err)
+      setForgotErr('No se pudo enviar el correo. Intenta nuevamente.')
+    } finally {
+      setForgotSending(false)
+      setForgotCooldown(30)
     }
-    
-    setForgotSent(true)
-    
-  } catch (err) {
-    console.error('Error:', err)
-    setForgotErr('No se pudo enviar el correo. Intenta nuevamente.')
-  } finally {
-    setForgotSending(false)
-    setForgotCooldown(30)
   }
-}
 
   function handleForgotOtpChange(i, val) {
     const v = val.replace(/\D/g, '').slice(-1)
@@ -1427,7 +1389,7 @@ function PageAdmin({ cotizaciones, clientes, precios, onBack, onChangeEstado, on
 
   async function sendEmail() {
     if (!cot || !emailDraft.trim()) return
-    if (EMAILJS_TEMPLATE_COTIZACION === 'template_4oi6jej') {
+    if (EMAILJS_TEMPLATE_COTIZACION === 'TU_TEMPLATE_GENERAL') {
       alert('⚠️ Configura EMAILJS_TEMPLATE_GENERAL en App.jsx antes de enviar correos.\nCrea una plantilla en EmailJS (Subject={{subject}}, To Email={{to_email}}, Content={{message}}) y reemplaza la constante al inicio del archivo.')
       return
     }
@@ -1460,7 +1422,7 @@ function PageAdmin({ cotizaciones, clientes, precios, onBack, onChangeEstado, on
   // Correo de confirmación de pedido (formato tipo "Order Confirmation", en texto plano)
   async function sendConfirmacionPedido() {
     if (!cot) return
-    if (EMAILJS_TEMPLATE_CONFIRMACION === 'template_4oi6jej') {
+    if (EMAILJS_TEMPLATE_CONFIRMACION === 'TU_TEMPLATE_GENERAL') {
       alert('⚠️ Configura EMAILJS_TEMPLATE_GENERAL en App.jsx antes de enviar correos.\nCrea una plantilla en EmailJS (Subject={{subject}}, To Email={{to_email}}, Content={{message}}) y reemplaza la constante al inicio del archivo.')
       return
     }
