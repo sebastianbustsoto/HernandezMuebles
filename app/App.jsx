@@ -3,74 +3,39 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import emailjs from '@emailjs/browser'
 
-/* ════════════════════════════════════════════════════════════
-   EMAILJS CONFIG
-   ════════════════════════════════════════════════════════════ */
 const EMAILJS_SERVICE_ID = 'service_43d4j75'
 const EMAILJS_PUBLIC_KEY = 'lx2bES33rJekDrTgj'
 const EMAILJS_TEMPLATE_OTP = 'template_kh42o2m'
 const EMAILJS_TEMPLATE_TRANSACCIONAL = 'template_4oi6jej'
 
-const EMAILJS_TEMPLATE_REGISTRO     = EMAILJS_TEMPLATE_OTP
-const EMAILJS_TEMPLATE_RECUPERAR    = EMAILJS_TEMPLATE_OTP
-const EMAILJS_TEMPLATE_COTIZACION   = EMAILJS_TEMPLATE_TRANSACCIONAL
+const EMAILJS_TEMPLATE_COTIZACION = EMAILJS_TEMPLATE_TRANSACCIONAL
 const EMAILJS_TEMPLATE_CONFIRMACION = EMAILJS_TEMPLATE_TRANSACCIONAL
 
-/* ════════════════════════════════════════════════════════════
-   DATOS GLOBALES / CONSTANTES
-   ════════════════════════════════════════════════════════════ */
-
-const ADMIN_EMAIL    = 'joserhernandezmuebles@gmail.com'
-const ADMIN_PASSWORD = '1234'
+const EMAILJS_TEMPLATE_REGISTRO = EMAILJS_TEMPLATE_OTP
+const EMAILJS_TEMPLATE_RECUPERAR = EMAILJS_TEMPLATE_OTP
 
 const ETAPAS = ['cotización', 'fabricación', 'entrega', 'entregado']
 const ETAPA_LABEL = {
-  cotización: 'Cotización', fabricación: 'Fabricación',
-  entrega: 'Entrega', entregado: 'Entregado',
+  cotización: 'Cotización',
+  fabricación: 'Fabricación',
+  entrega: 'Entrega',
+  entregado: 'Entregado',
 }
 const ETAPA_COLOR = {
-  cotización: '#1a1a1a', fabricación: '#333333',
-  entrega: '#7a4f9a', entregado: '#2e7d32',
+  cotización: '#1a1a1a',
+  fabricación: '#333333',
+  entrega: '#7a4f9a',
+  entregado: '#2e7d32',
 }
 
 const MDF_GROSORES = ['MDF melamínico 9 mm (Blanco)', 'MDF melamínico 18 mm (Blanco)']
+const TIPOS_MUEBLE = ['Escritorio', 'Cocina', 'Baño', 'Otro']
 
-const MELAMINA_COLORES = {
-  únicolores: [
-    { nombre:'Enebro', hex:'#4a6741', texture:null, grain:null },
-    { nombre:'Arcilla', hex:'#b8836a', texture:null, grain:null },
-    { nombre:'Grafito', hex:'#4a4a52', texture:null, grain:null },
-    { nombre:'Gris humo', hex:'#9a9a9e', texture:null, grain:null },
-    { nombre:'Negro', hex:'#1c1c1e', texture:null, grain:null },
-    { nombre:'Rojo', hex:'#b03030', texture:null, grain:null },
-    { nombre:'Blanco', hex:'#f2f2f0', texture:null, grain:null },
-  ],
-  clasico: [
-    { nombre:'Cedro', hex:'#8b4513', texture:'clasico', grain:'#7a3a0e,#9b5520,#7a3a0e,#a06030' },
-    { nombre:'Cerezo', hex:'#9b3a2a', texture:'clasico', grain:'#8a2a1a,#b04a35,#8a2a1a,#a03828' },
-    { nombre:'Coigüe', hex:'#c8a870', texture:'clasico', grain:'#b89058,#d8b880,#b89058,#c8a060' },
-    { nombre:'Coigüe chocolate', hex:'#6b4226', texture:'clasico', grain:'#5a3018,#7b5232,#5a3018,#6b4220' },
-    { nombre:'Peral', hex:'#d4b890', texture:'clasico', grain:'#c4a880,#e4c8a0,#c4a880,#d4b888' },
-    { nombre:'Espresso', hex:'#3b2314', texture:'clasico', grain:'#2a1208,#4a3020,#2a1208,#3a2010' },
-  ],
-  forest: [
-    { nombre:'Umbra', hex:'#5c4a32', texture:'forest', grain:'#4a3820,#6c5a42,#4a3820,#5c4a30' },
-    { nombre:'Morel', hex:'#4a3728', texture:'forest', grain:'#3a2718,#5a4738,#3a2718,#4a3728' },
-    { nombre:'Cocoa', hex:'#7b5c3a', texture:'forest', grain:'#6a4c28,#8b6c4a,#6a4c28,#7b5c38' },
-    { nombre:'Nogal terracota', hex:'#8b5e3c', texture:'forest', grain:'#7a4e2c,#9b6e4c,#7a4e2c,#8b5e3a' },
-    { nombre:'Roble rústico', hex:'#a0784a', texture:'forest', grain:'#906838,#b0885a,#906838,#a07848' },
-    { nombre:'Toscana', hex:'#c4a882', texture:'forest', grain:'#b49872,#d4b892,#b49872,#c4a880' },
-    { nombre:'Roble cava', hex:'#6b4e38', texture:'forest', grain:'#5a3e28,#7b5e48,#5a3e28,#6b4e36' },
-  ],
-}
-
-/* ════════════════════════════════════════════════════════════
-   UTILS
-   ════════════════════════════════════════════════════════════ */
 function getSaludo() {
   const h = new Date().getHours()
   return h < 12 ? 'días' : h < 19 ? 'tardes' : 'noches'
 }
+
 function generarCódigo(nombres, apellidos, número) {
   const n = new Date()
   const dd = String(n.getDate()).padStart(2, '0')
@@ -80,6 +45,7 @@ function generarCódigo(nombres, apellidos, número) {
   const digitos = String(número || '').replace(/\D/g, '').slice(-2)
   return dd + mm + iN + iA + digitos
 }
+
 function formatPhone(raw) {
   const prefix = '+56 9 '
   let d = String(raw || '').replace(/\D/g, '')
@@ -87,200 +53,10 @@ function formatPhone(raw) {
   d = d.slice(0, 8)
   return prefix + d.slice(0, 4) + (d.length > 4 ? ' ' + d.slice(4, 8) : '')
 }
+
 function generarOTP() {
   return String(Math.floor(100000 + Math.random() * 900000))
 }
-function makeWoodTextureSVG(base, grain, size) {
-  const s = size || 36
-  const c = grain.split(',')
-  const [c0, c1, c2, c3] = [c[0]||base, c[1]||base, c[2]||base, c[3]||base]
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
-    <defs><linearGradient id="g0" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="${c0}"/><stop offset="28%" stop-color="${c1}"/>
-    <stop offset="55%" stop-color="${c2}"/><stop offset="78%" stop-color="${c1}"/>
-    <stop offset="100%" stop-color="${c3}"/></linearGradient></defs>
-    <rect width="${s}" height="${s}" fill="url(#g0)"/>
-    <line x1="0" y1="6" x2="${s}" y2="5" stroke="rgba(0,0,0,.07)" stroke-width="0.8"/>
-    <line x1="0" y1="12" x2="${s}" y2="11" stroke="rgba(0,0,0,.05)" stroke-width="0.5"/>
-    <line x1="0" y1="19" x2="${s}" y2="18" stroke="rgba(0,0,0,.08)" stroke-width="1"/>
-    <line x1="0" y1="25" x2="${s}" y2="26" stroke="rgba(0,0,0,.05)" stroke-width="0.6"/>
-    <line x1="0" y1="30" x2="${s}" y2="31" stroke="rgba(0,0,0,.06)" stroke-width="0.7"/>
-    </svg>`
-  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)))
-}
-
-/* ════════════════════════════════════════════════════════════
-   SVG MUEBLES
-   ════════════════════════════════════════════════════════════ */
-const _mc  = s => s ? '#1a1a1a' : '#c0c0c0'
-const _bc  = s => s ? '#e4d0c0' : '#ebebeb'
-const _fc  = s => s ? '#f8f0e8' : '#f5f5f5'
-const _wd  = s => s ? '#d4b890' : '#e0e0e0'
-
-const SVG_FNS = {
-  escritorio_simple: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="16" width="94" height="9" rx="1" fill="${_wd(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="3" y="16" width="94" height="3" rx="1" fill="rgba(255,255,255,.4)"/>
-      <rect x="3" y="25" width="10" height="38" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="87" y="25" width="10" height="38" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-    </svg>`,
-  escritorio_repisas: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="14" width="94" height="8" rx="1" fill="${_wd(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="3" y="22" width="10" height="42" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="72" y="22" width="25" height="42" rx="1" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="72" y="36" width="25" height="2" fill="${_mc(s)}" opacity=".5"/>
-      <rect x="72" y="52" width="25" height="2" fill="${_mc(s)}" opacity=".5"/>
-    </svg>`,
-  escritorio_cajon: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="14" width="94" height="8" rx="1" fill="${_wd(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="3" y="22" width="10" height="42" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="68" y="22" width="29" height="42" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="70" y="25" width="25" height="12" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="80" y="30" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="70" y="40" width="25" height="20" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="80" y="49" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-    </svg>`,
-  escritorio_pedestal: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="12" width="94" height="8" rx="1" fill="${_wd(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="3" y="20" width="10" height="44" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="56" y="20" width="38" height="44" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="58" y="23" width="34" height="9" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="70" y="27" width="12" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="58" y="35" width="34" height="9" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="70" y="39" width="12" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="58" y="47" width="34" height="14" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="70" y="53" width="12" height="2" rx="1" fill="${_mc(s)}"/>
-    </svg>`,
-  cocina_bajo: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="30" width="94" height="6" rx="1" fill="#d0d0d0" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="3" y="36" width="94" height="26" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="5" y="39" width="26" height="9" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="15" y="43" width="8" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="5" y="51" width="44" height="8" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <circle cx="46" cy="55" r="2" fill="${_mc(s)}"/>
-      <rect x="52" y="51" width="43" height="8" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <circle cx="52" cy="55" r="2" fill="${_mc(s)}"/>
-    </svg>`,
-  cocina_integral: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="4" width="42" height="24" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="6" y="7" width="18" height="18" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="26" y="7" width="16" height="18" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="50" y="4" width="47" height="24" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="53" y="7" width="41" height="18" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="3" y="30" width="94" height="5" rx="1" fill="#d0d0d0" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="3" y="35" width="94" height="28" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="5" y="37" width="44" height="9" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="28" y="41" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="5" y="49" width="44" height="11" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="24" y="54" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="52" y="37" width="43" height="24" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="70" y="48" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-    </svg>`,
-  cocina_torre: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="4" width="22" height="58" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="5" y="7" width="18" height="24" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="9" y="19" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="5" y="34" width="18" height="24" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="9" y="45" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="28" y="4" width="69" height="22" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="31" y="7" width="63" height="16" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="28" y="30" width="69" height="5" rx="1" fill="#d0d0d0" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="28" y="35" width="69" height="27" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="30" y="38" width="30" height="20" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <circle cx="57" cy="48" r="2" fill="${_mc(s)}"/>
-      <rect x="63" y="38" width="32" height="9" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="74" y="42" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="63" y="50" width="32" height="9" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="74" y="54" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-    </svg>`,
-  cocina_esquinera: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="3" y="4" width="58" height="22" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="6" y="7" width="24" height="16" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="33" y="7" width="25" height="16" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="3" y="28" width="58" height="5" rx="1" fill="#d0d0d0" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="3" y="33" width="58" height="28" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="5" y="36" width="25" height="22" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <circle cx="27" cy="47" r="2" fill="${_mc(s)}"/>
-      <rect x="64" y="28" width="33" height="5" rx="1" fill="#d0d0d0" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="64" y="33" width="33" height="28" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="66" y="36" width="29" height="22" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-    </svg>`,
-  banio_simple: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="10" y="38" width="80" height="24" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="35" y="14" width="30" height="24" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="12" y="41" width="35" height="18" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <circle cx="47" cy="50" r="2" fill="${_mc(s)}"/>
-      <rect x="50" y="41" width="37" height="18" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <circle cx="50" cy="50" r="2" fill="${_mc(s)}"/>
-    </svg>`,
-  banio_cajones: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="4" y="4" width="78" height="28" rx="2" fill="#cce0ee" stroke="${_mc(s)}" stroke-width="1" opacity=".8"/>
-      <rect x="4" y="34" width="78" height="5" rx="1" fill="#d0d0d0" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="4" y="39" width="78" height="25" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="7" y="42" width="72" height="9" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="40" y="46" width="12" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="7" y="54" width="72" height="8" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="40" y="57" width="12" height="2" rx="1" fill="${_mc(s)}"/>
-    </svg>`,
-  banio_wc: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="20" y="4" width="60" height="28" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="23" y="7" width="27" height="22" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="34" y="17" width="6" height="5" rx="2" fill="${_mc(s)}"/>
-      <rect x="53" y="7" width="24" height="22" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="61" y="17" width="6" height="5" rx="2" fill="${_mc(s)}"/>
-      <rect x="20" y="34" width="60" height="8" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="38" y="44" width="24" height="20" rx="8" fill="#e8e8e8" stroke="#ccc"/>
-      <rect x="44" y="44" width="12" height="8" rx="2" fill="#f0f0f0" stroke="#ccc"/>
-    </svg>`,
-  banio_módulo: s =>
-    `<svg width="100" height="68" viewBox="0 0 100 68" xmlns="http:
-      <rect x="4" y="4" width="56" height="28" rx="2" fill="#cce0ee" stroke="${_mc(s)}" stroke-width="1" opacity=".8"/>
-      <rect x="4" y="34" width="56" height="5" rx="1" fill="#d0d0d0" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="4" y="39" width="56" height="25" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="7" y="42" width="50" height="19" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="30" y="51" width="10" height="2" rx="1" fill="${_mc(s)}"/>
-      <rect x="63" y="4" width="33" height="60" rx="2" fill="${_fc(s)}" stroke="${_mc(s)}" stroke-width="1"/>
-      <rect x="65" y="7" width="29" height="20" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="65" y="35" width="29" height="20" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-      <rect x="65" y="57" width="29" height="5" rx="1" fill="${_bc(s)}" stroke="${_mc(s)}" stroke-width=".8"/>
-    </svg>`,
-}
-
-const FURNITURE_CATALOG = {
-  Escritorio: [
-    { id:'esc1', title:'Escritorio simple',      desc:'Tablero amplio con dos laterales. Diseño limpio.', svgKey:'escritorio_simple' },
-    { id:'esc2', title:'Con repisas',            desc:'Tablero con módulo de repisas abiertas.',          svgKey:'escritorio_repisas' },
-    { id:'esc3', title:'Con cajón y módulo',     desc:'Tablero, cajón superior y puerta inferior.',       svgKey:'escritorio_cajon' },
-    { id:'esc4', title:'Pedestal completo',      desc:'Tablero con pedestal de tres cajones.',            svgKey:'escritorio_pedestal' },
-  ],
-  Cocina: [
-    { id:'coc1', title:'Módulo bajo',            desc:'Módulos bajos con cajones y puertas.',             svgKey:'cocina_bajo' },
-    { id:'coc2', title:'Cocina integral',        desc:'Altos y bajos completos.',                         svgKey:'cocina_integral' },
-    { id:'coc3', title:'Con torre',              desc:'Torre de alacena con módulos.',                    svgKey:'cocina_torre' },
-    { id:'coc4', title:'Esquinera',              desc:'Diseño en L para rincones.',                       svgKey:'cocina_esquinera' },
-  ],
-  Baño: [
-    { id:'ban1', title:'Vanitory simple',        desc:'Vanitory sencillo con puertas.',                   svgKey:'banio_simple' },
-    { id:'ban2', title:'Con cajones',            desc:'Vanitory bajo mesón con cajones.',                 svgKey:'banio_cajones' },
-    { id:'ban3', title:'Con WC integrado',       desc:'Módulo que incluye espacio para WC.',              svgKey:'banio_wc' },
-    { id:'ban4', title:'Módulo completo',        desc:'Vanitory + columna lateral.',                      svgKey:'banio_módulo' },
-  ],
-}
-
-/* ════════════════════════════════════════════════════════════
-   COMPONENTES UI BASE
-   ════════════════════════════════════════════════════════════ */
 
 function Btn({ children, onClick, outline, small, full, danger, disabled, style = {} }) {
   const base = {
@@ -288,133 +64,222 @@ function Btn({ children, onClick, outline, small, full, danger, disabled, style 
     color: outline ? '#1a1a1a' : '#fff',
     border: outline ? '1.5px solid #1a1a1a' : 'none',
     padding: small ? '7px 11px' : '11px 20px',
-    borderRadius: 10, cursor: disabled ? 'not-allowed' : 'pointer',
-    fontSize: small ? 12 : 14, fontWeight: 700,
-    width: full ? '100%' : 'auto', opacity: disabled ? 0.55 : 1,
-    transition: 'background .15s', ...style,
+    borderRadius: 10,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: small ? 12 : 14,
+    fontWeight: 700,
+    width: full ? '100%' : 'auto',
+    opacity: disabled ? 0.55 : 1,
+    transition: 'background .15s',
+    ...style,
   }
   return (
-    <button disabled={disabled} onClick={onClick} style={base}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = danger ? '#b71c1c' : outline ? 'rgba(26,26,26,.12)' : '#000000' }}
-      onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = danger ? '#c62828' : outline ? 'transparent' : '#1a1a1a' }}
-    >{children}</button>
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      style={base}
+      onMouseEnter={(e) => {
+        if (!disabled)
+          e.currentTarget.style.background = danger
+            ? '#b71c1c'
+            : outline
+            ? 'rgba(26,26,26,.12)'
+            : '#000000'
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled)
+          e.currentTarget.style.background = danger
+            ? '#c62828'
+            : outline
+            ? 'transparent'
+            : '#1a1a1a'
+      }}
+    >
+      {children}
+    </button>
   )
 }
 
 function Field({ label, id, type = 'text', value, onChange, placeholder, invalid, disabled, rows, style = {} }) {
   const inputStyle = {
-    width: '100%', padding: '10px 12px',
+    width: '100%',
+    padding: '10px 12px',
     border: `1px solid ${invalid ? '#c62828' : 'rgba(217,217,217,.7)'}`,
-    borderRadius: 10, fontSize: 14,
+    borderRadius: 10,
+    fontSize: 14,
     background: invalid ? 'rgba(255,235,238,.92)' : 'rgba(255,255,255,.70)',
-    color: '#222', outline: 'none', boxSizing: 'border-box',
+    color: '#222',
+    outline: 'none',
+    boxSizing: 'border-box',
     boxShadow: invalid ? '0 0 0 3px rgba(198,40,40,.18)' : 'none',
-    opacity: disabled ? 0.55 : 1, ...style,
+    opacity: disabled ? 0.55 : 1,
+    ...style,
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      {label && <label htmlFor={id} style={{ fontSize: 12, fontWeight: 600, color: '#444' }}>{label}</label>}
-      {rows
-        ? <textarea id={id} value={value} onChange={onChange} placeholder={placeholder} rows={rows} disabled={disabled} style={{ ...inputStyle, resize: 'vertical' }} />
-        : <input id={id} type={type} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} style={inputStyle} />
-      }
+      {label && (
+        <label htmlFor={id} style={{ fontSize: 12, fontWeight: 600, color: '#444' }}>
+          {label}
+        </label>
+      )}
+      {rows ? (
+        <textarea
+          id={id}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={rows}
+          disabled={disabled}
+          style={{ ...inputStyle, resize: 'vertical' }}
+        />
+      ) : (
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          style={inputStyle}
+        />
+      )}
     </div>
   )
 }
 
 function Card({ children, style = {}, warm, className = '' }) {
   return (
-    <div className={className} style={{
-      background: warm ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.55)',
-      border: warm ? '1px solid rgba(0,0,0,.30)' : '1px solid rgba(255,255,255,.60)',
-      borderRadius: 16, backdropFilter: 'blur(8px)', ...style,
-    }}>{children}</div>
+    <div
+      className={className}
+      style={{
+        background: warm ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.55)',
+        border: warm ? '1px solid rgba(0,0,0,.30)' : '1px solid rgba(255,255,255,.60)',
+        borderRadius: 16,
+        backdropFilter: 'blur(8px)',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
   )
 }
 
 function Modal({ onClose, children, maxW = 440 }) {
   return (
-    <div className="anim-overlay" onClick={e => e.target === e.currentTarget && onClose()}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-      <div className="anim-pop" style={{ background: 'rgba(255,255,255,.97)', borderRadius: 20, padding: 28, maxWidth: maxW, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+    <div
+      className="anim-overlay"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,.45)',
+        zIndex: 400,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backdropFilter: 'blur(4px)',
+      }}
+    >
+      <div
+        className="anim-pop"
+        style={{
+          background: 'rgba(255,255,255,.97)',
+          borderRadius: 20,
+          padding: 28,
+          maxWidth: maxW,
+          width: '90%',
+          boxShadow: '0 20px 60px rgba(0,0,0,.2)',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+        }}
+      >
         {children}
       </div>
     </div>
   )
 }
 
-/* ════════════════════════════════════════════════════════════
-   MODAL AUTH
-   ════════════════════════════════════════════════════════════ */
-function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) {
+function ModalAuth({ onClose, onLogin, onRegister, onResetPassword }) {
   const [tab, setTab] = useState('login')
   const [loginEmail, setLoginEmail] = useState('')
-  const [loginPass, setLoginPass]   = useState('')
+  const [loginPass, setLoginPass] = useState('')
   const [err, setErr] = useState('')
-  const [regNombres, setRegNombres]     = useState('')
+  const [regNombres, setRegNombres] = useState('')
   const [regApellidos, setRegApellidos] = useState('')
-  const [regEmail, setRegEmail]         = useState('')
-  const [regTel, setRegTel]             = useState('+56 9 ')
-  const [regPass, setRegPass]           = useState('')
-  const [regErr, setRegErr]             = useState('')
-
-  const [verifying, setVerifying]   = useState(false)
-  const [otpSent, setOtpSent]       = useState('')
-  const [otpInputs, setOtpInputs]   = useState(['', '', '', '', '', ''])
-  const [otpErr, setOtpErr]         = useState('')
-  const [sending, setSending]       = useState(false)
+  const [regEmail, setRegEmail] = useState('')
+  const [regTel, setRegTel] = useState('+56 9 ')
+  const [regPass, setRegPass] = useState('')
+  const [regErr, setRegErr] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [otpSent, setOtpSent] = useState('')
+  const [otpInputs, setOtpInputs] = useState(['', '', '', '', '', ''])
+  const [otpErr, setOtpErr] = useState('')
+  const [sending, setSending] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
-
   const [forgotMode, setForgotMode] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
-  const [forgotErr, setForgotErr]   = useState('')
+  const [forgotErr, setForgotErr] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
   const [forgotOtpSent, setForgotOtpSent] = useState('')
   const [forgotOtpInputs, setForgotOtpInputs] = useState(['', '', '', '', '', ''])
-  const [forgotNewPass, setForgotNewPass]     = useState('')
-  const [forgotNewPass2, setForgotNewPass2]   = useState('')
-  const [forgotSending, setForgotSending]     = useState(false)
-  const [forgotCooldown, setForgotCooldown]   = useState(0)
-  const [forgotOk, setForgotOk]     = useState(false)
+  const [forgotNewPass, setForgotNewPass] = useState('')
+  const [forgotNewPass2, setForgotNewPass2] = useState('')
+  const [forgotSending, setForgotSending] = useState(false)
+  const [forgotCooldown, setForgotCooldown] = useState(0)
+  const [forgotOk, setForgotOk] = useState(false)
 
   useEffect(() => {
     if (resendCooldown <= 0) return
-    const t = setInterval(() => setResendCooldown(s => Math.max(0, s - 1)), 1000)
+    const t = setInterval(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000)
     return () => clearInterval(t)
   }, [resendCooldown])
 
   useEffect(() => {
     if (forgotCooldown <= 0) return
-    const t = setInterval(() => setForgotCooldown(s => Math.max(0, s - 1)), 1000)
+    const t = setInterval(() => setForgotCooldown((s) => Math.max(0, s - 1)), 1000)
     return () => clearInterval(t)
   }, [forgotCooldown])
 
   function doLogin() {
-    const e = loginEmail.trim().toLowerCase(), p = loginPass.trim()
-    if (!e || !p) { setErr('Completa todos los campos'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setErr('Ingresa un correo electrónico válido (debe contener @).'); return }
-    
-    // Login usando API
+    const e = loginEmail.trim().toLowerCase(),
+      p = loginPass.trim()
+    if (!e || !p) {
+      setErr('Completa todos los campos')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+      setErr('Ingresa un correo electrónico válido (debe contener @).')
+      return
+    }
     fetch('/api/clientes/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: e, password: p })
+      body: JSON.stringify({ email: e, password: p }),
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.cliente) {
-        onLogin(data.cliente)
-      } else {
-        setErr(data.error || 'Correo o contraseña incorrectos')
-      }
-    })
-    .catch(() => setErr('Error al conectar con el servidor'))
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.cliente) {
+          onLogin(data.cliente)
+        } else {
+          setErr(data.error || 'Correo o contraseña incorrectos')
+        }
+      })
+      .catch(() => setErr('Error al conectar con el servidor'))
   }
 
   function validateRegFields() {
-    if (!regNombres.trim() || !regApellidos.trim() || !regEmail.trim() || !regPass.trim()) { setRegErr('Completa todos los campos'); return false }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())) { setRegErr('Ingresa un correo electrónico válido (debe contener @).'); return false }
-    if (regPass.length < 4) { setRegErr('La contraseña debe tener al menos 4 carácteres'); return false }
+    if (!regNombres.trim() || !regApellidos.trim() || !regEmail.trim() || !regPass.trim()) {
+      setRegErr('Completa todos los campos')
+      return false
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail.trim())) {
+      setRegErr('Ingresa un correo electrónico válido (debe contener @).')
+      return false
+    }
+    if (regPass.length < 4) {
+      setRegErr('La contraseña debe tener al menos 4 carácteres')
+      return false
+    }
     return true
   }
 
@@ -429,16 +294,16 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
           EMAILJS_SERVICE_ID,
           EMAILJS_TEMPLATE_REGISTRO,
           {
-            passcode:  code,
-            time:      '15 minutos',
-            email:     regEmail.trim().toLowerCase(),
-            to_name:   regNombres.trim(),
-            to_email:  regEmail.trim().toLowerCase(),
+            passcode: code,
+            time: '15 minutos',
+            email: regEmail.trim().toLowerCase(),
+            to_name: regNombres.trim(),
+            to_email: regEmail.trim().toLowerCase(),
             from_name: 'Hernández Muebles',
-            reply_to:  ADMIN_EMAIL,
-            subject:   'Código de verificación — Hernández Muebles',
-            message:   `Hola ${regNombres.trim()},\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para confirmar tu correo y activar tu cuenta.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
-            codigo:    code,
+            reply_to: ADMIN_EMAIL,
+            subject: 'Código de verificación — Hernández Muebles',
+            message: `Hola ${regNombres.trim()},\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para confirmar tu correo y activar tu cuenta.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
+            codigo: code,
           },
           EMAILJS_PUBLIC_KEY
         )
@@ -464,8 +329,10 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
 
   function handleOtpChange(i, val) {
     const v = val.replace(/\D/g, '').slice(-1)
-    setOtpInputs(prev => {
-      const next = [...prev]; next[i] = v; return next
+    setOtpInputs((prev) => {
+      const next = [...prev]
+      next[i] = v
+      return next
     })
     setOtpErr('')
     if (v && i < 5) {
@@ -473,6 +340,7 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
       nextEl?.focus()
     }
   }
+
   function handleOtpKeyDown(i, e) {
     if (e.key === 'Backspace' && !otpInputs[i] && i > 0) {
       document.getElementById(`otp-${i - 1}`)?.focus()
@@ -481,9 +349,14 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
 
   async function confirmOtp() {
     const code = otpInputs.join('')
-    if (code.length !== 6) { setOtpErr('Ingresa los 6 dígitos del código.'); return }
-    if (code !== otpSent) { setOtpErr('El código ingresado es incorrecto.'); return }
-    
+    if (code.length !== 6) {
+      setOtpErr('Ingresa los 6 dígitos del código.')
+      return
+    }
+    if (code !== otpSent) {
+      setOtpErr('El código ingresado es incorrecto.')
+      return
+    }
     setSending(true)
     try {
       const res = await fetch('/api/clientes/registro', {
@@ -494,12 +367,10 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
           apellidos: regApellidos.trim(),
           email: regEmail.trim().toLowerCase(),
           password: regPass.trim(),
-          telefono: regTel || ''
-        })
+          telefono: regTel || '',
+        }),
       })
-      
       const data = await res.json()
-      
       if (data.cliente) {
         onRegister(data.cliente)
       } else {
@@ -513,19 +384,22 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     }
   }
 
-  /* ── RECUPERAR CONTRASEÑA ── */
   async function sendForgotCode() {
     const e = forgotEmail.trim().toLowerCase()
     setForgotErr('')
-    if (!e) { setForgotErr('Ingresa tu correo electrónico.'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setForgotErr('Ingresa un correo electrónico válido.'); return }
-    
-    // Verificar que el usuario existe
+    if (!e) {
+      setForgotErr('Ingresa tu correo electrónico.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+      setForgotErr('Ingresa un correo electrónico válido.')
+      return
+    }
     try {
       const res = await fetch('/api/clientes/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: e, password: '' })
+        body: JSON.stringify({ email: e, password: '' }),
       })
       const data = await res.json()
       if (!data.cliente) {
@@ -536,7 +410,6 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
       setForgotErr('Error al verificar el correo.')
       return
     }
-
     const code = generarOTP()
     setForgotOtpSent(code)
     setForgotOtpInputs(['', '', '', '', '', ''])
@@ -547,16 +420,16 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
           EMAILJS_SERVICE_ID,
           EMAILJS_TEMPLATE_RECUPERAR,
           {
-            passcode:  code,
-            time:      '15 minutos',
-            email:     e,
-            to_name:   forgotEmail.trim().split('@')[0],
-            to_email:  e,
+            passcode: code,
+            time: '15 minutos',
+            email: e,
+            to_name: forgotEmail.trim().split('@')[0],
+            to_email: e,
             from_name: 'Hernández Muebles',
-            reply_to:  ADMIN_EMAIL,
-            subject:   'Recupera tu contraseña — Hernández Muebles',
-            message:   `Hola,\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para crear una nueva contraseña.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
-            codigo:    code,
+            reply_to: ADMIN_EMAIL,
+            subject: 'Recupera tu contraseña — Hernández Muebles',
+            message: `Hola,\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para crear una nueva contraseña.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
+            codigo: code,
           },
           EMAILJS_PUBLIC_KEY
         )
@@ -576,42 +449,79 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
 
   function handleForgotOtpChange(i, val) {
     const v = val.replace(/\D/g, '').slice(-1)
-    setForgotOtpInputs(prev => { const next = [...prev]; next[i] = v; return next })
+    setForgotOtpInputs((prev) => {
+      const next = [...prev]
+      next[i] = v
+      return next
+    })
     setForgotErr('')
     if (v && i < 5) document.getElementById(`forgot-otp-${i + 1}`)?.focus()
   }
+
   function handleForgotOtpKeyDown(i, e) {
-    if (e.key === 'Backspace' && !forgotOtpInputs[i] && i > 0) document.getElementById(`forgot-otp-${i - 1}`)?.focus()
+    if (e.key === 'Backspace' && !forgotOtpInputs[i] && i > 0)
+      document.getElementById(`forgot-otp-${i - 1}`)?.focus()
   }
 
   async function confirmResetPassword() {
     const code = forgotOtpInputs.join('')
-    if (code.length !== 6) { setForgotErr('Ingresa los 6 dígitos del código.'); return }
-    if (code !== forgotOtpSent) { setForgotErr('El código ingresado es incorrecto.'); return }
-    if (forgotNewPass.length < 4) { setForgotErr('La nueva contraseña debe tener al menos 4 carácteres.'); return }
-    if (forgotNewPass !== forgotNewPass2) { setForgotErr('Las contraseñas no coinciden.'); return }
+    if (code.length !== 6) {
+      setForgotErr('Ingresa los 6 dígitos del código.')
+      return
+    }
+    if (code !== forgotOtpSent) {
+      setForgotErr('El código ingresado es incorrecto.')
+      return
+    }
+    if (forgotNewPass.length < 4) {
+      setForgotErr('La nueva contraseña debe tener al menos 4 carácteres.')
+      return
+    }
+    if (forgotNewPass !== forgotNewPass2) {
+      setForgotErr('Las contraseñas no coinciden.')
+      return
+    }
     setForgotErr('')
-    
     onResetPassword(forgotEmail.trim().toLowerCase(), forgotNewPass)
     setForgotOk(true)
   }
 
   function backToLogin() {
-    setForgotMode(false); setForgotSent(false); setForgotOk(false)
-    setForgotEmail(''); setForgotErr(''); setForgotNewPass(''); setForgotNewPass2('')
+    setForgotMode(false)
+    setForgotSent(false)
+    setForgotOk(false)
+    setForgotEmail('')
+    setForgotErr('')
+    setForgotNewPass('')
+    setForgotNewPass2('')
     setForgotOtpInputs(['', '', '', '', '', ''])
   }
 
   const Tab = ({ id, label }) => (
-    <button onClick={() => { setTab(id); setErr(''); setRegErr(''); setVerifying(false) }} style={{
-      flex: 1, padding: 8, border: 'none', borderRadius: 8, cursor: 'pointer',
-      fontSize: 12, fontWeight: 700,
-      background: tab === id ? '#1a1a1a' : 'transparent',
-      color: tab === id ? '#fff' : '#666', transition: 'all .2s',
-    }}>{label}</button>
+    <button
+      onClick={() => {
+        setTab(id)
+        setErr('')
+        setRegErr('')
+        setVerifying(false)
+      }}
+      style={{
+        flex: 1,
+        padding: 8,
+        border: 'none',
+        borderRadius: 8,
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: 700,
+        background: tab === id ? '#1a1a1a' : 'transparent',
+        color: tab === id ? '#fff' : '#666',
+        transition: 'all .2s',
+      }}
+    >
+      {label}
+    </button>
   )
 
-  /* ── RECUPERAR CONTRASEÑA ── */
   if (forgotMode) {
     if (forgotOk) {
       return (
@@ -620,52 +530,163 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
             <div style={{ fontSize: 48, marginBottom: 10 }}>✅</div>
             <h3 style={{ fontSize: 19, marginBottom: 8 }}>Contraseña actualizada</h3>
             <p style={{ fontSize: 13, color: '#666', marginBottom: 20, lineHeight: 1.6 }}>
-              Tu contraseña fue restablecida correctamente. Ya puedes iniciar sesión con tu nueva contraseña.
+              Tu contraseña fue restablecida correctamente. Ya puedes iniciar sesión con tu nueva
+              contraseña.
             </p>
-            <Btn full onClick={backToLogin}>Ir a iniciar sesión</Btn>
+            <Btn full onClick={backToLogin}>
+              Ir a iniciar sesión
+            </Btn>
           </div>
         </Modal>
       )
     }
-
     return (
       <Modal onClose={onClose}>
-        <div className="anim-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div
+          className="anim-fade-up"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 6,
+          }}
+        >
           <span style={{ fontSize: 20, fontWeight: 800 }}>Recuperar contraseña</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}>✕</button>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}
+          >
+            ✕
+          </button>
         </div>
-
         {!forgotSent ? (
           <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
             <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
-              Ingresa el correo con el que te registraste. Te enviaremos un código de 6 dígitos para crear una nueva contraseña.
+              Ingresa el correo con el que te registraste. Te enviaremos un código de 6 dígitos para
+              crear una nueva contraseña.
             </p>
-            {forgotErr && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{forgotErr}</div>}
-            <Field label="Correo electrónico" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="correo@ejemplo.cl" />
-            <Btn full onClick={sendForgotCode} disabled={forgotSending}>{forgotSending ? 'Enviando código...' : 'Enviar código'}</Btn>
-            <button onClick={backToLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12, alignSelf: 'center' }}>← Volver a iniciar sesión</button>
+            {forgotErr && (
+              <div
+                className="anim-shake"
+                style={{
+                  background: 'rgba(198,40,40,.1)',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  fontSize: 13,
+                  color: '#c62828',
+                }}
+              >
+                {forgotErr}
+              </div>
+            )}
+            <Field
+              label="Correo electrónico"
+              type="email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              placeholder="correo@ejemplo.cl"
+            />
+            <Btn full onClick={sendForgotCode} disabled={forgotSending}>
+              {forgotSending ? 'Enviando código...' : 'Enviar código'}
+            </Btn>
+            <button
+              onClick={backToLogin}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#1a1a1a',
+                fontWeight: 700,
+                fontSize: 12,
+                alignSelf: 'center',
+              }}
+            >
+              ← Volver a iniciar sesión
+            </button>
           </div>
         ) : (
           <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
             <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
-              Enviamos un código de 6 dígitos a <b>{forgotEmail.trim().toLowerCase()}</b>. Ingrésalo junto con tu nueva contraseña.
+              Enviamos un código de 6 dígitos a <b>{forgotEmail.trim().toLowerCase()}</b>. Ingrésalo
+              junto con tu nueva contraseña.
             </p>
             <div className={`otp-row${forgotErr ? ' anim-shake' : ''}`}>
               {forgotOtpInputs.map((v, i) => (
-                <input key={i} id={`forgot-otp-${i}`} className="otp-box" maxLength={1} inputMode="numeric"
-                  value={v} onChange={e => handleForgotOtpChange(i, e.target.value)}
-                  onKeyDown={e => handleForgotOtpKeyDown(i, e)} autoFocus={i === 0} />
+                <input
+                  key={i}
+                  id={`forgot-otp-${i}`}
+                  className="otp-box"
+                  maxLength={1}
+                  inputMode="numeric"
+                  value={v}
+                  onChange={(e) => handleForgotOtpChange(i, e.target.value)}
+                  onKeyDown={(e) => handleForgotOtpKeyDown(i, e)}
+                  autoFocus={i === 0}
+                />
               ))}
             </div>
-            <Field label="Nueva contraseña" type="password" value={forgotNewPass} onChange={e => setForgotNewPass(e.target.value)} placeholder="Mínimo 4 carácteres" />
-            <Field label="Confirmar nueva contraseña" type="password" value={forgotNewPass2} onChange={e => setForgotNewPass2(e.target.value)} placeholder="••••" />
-            {forgotErr && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{forgotErr}</div>}
-            <Btn full onClick={confirmResetPassword}>Restablecer contraseña</Btn>
+            <Field
+              label="Nueva contraseña"
+              type="password"
+              value={forgotNewPass}
+              onChange={(e) => setForgotNewPass(e.target.value)}
+              placeholder="Mínimo 4 carácteres"
+            />
+            <Field
+              label="Confirmar nueva contraseña"
+              type="password"
+              value={forgotNewPass2}
+              onChange={(e) => setForgotNewPass2(e.target.value)}
+              placeholder="••••"
+            />
+            {forgotErr && (
+              <div
+                className="anim-shake"
+                style={{
+                  background: 'rgba(198,40,40,.1)',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  fontSize: 13,
+                  color: '#c62828',
+                }}
+              >
+                {forgotErr}
+              </div>
+            )}
+            <Btn full onClick={confirmResetPassword}>
+              Restablecer contraseña
+            </Btn>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
-              <button onClick={backToLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12 }}>← Volver</button>
-              <button onClick={sendForgotCode} disabled={forgotSending || forgotCooldown > 0}
-                style={{ background: 'none', border: 'none', cursor: forgotCooldown > 0 ? 'default' : 'pointer', color: forgotCooldown > 0 ? '#aaa' : '#1a1a1a', fontWeight: 700, fontSize: 12 }}>
-                {forgotSending ? 'Enviando...' : forgotCooldown > 0 ? `Reenviar (${forgotCooldown}s)` : 'Reenviar código'}
+              <button
+                onClick={backToLogin}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#1a1a1a',
+                  fontWeight: 700,
+                  fontSize: 12,
+                }}
+              >
+                ← Volver
+              </button>
+              <button
+                onClick={sendForgotCode}
+                disabled={forgotSending || forgotCooldown > 0}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: forgotCooldown > 0 ? 'default' : 'pointer',
+                  color: forgotCooldown > 0 ? '#aaa' : '#1a1a1a',
+                  fontWeight: 700,
+                  fontSize: 12,
+                }}
+              >
+                {forgotSending
+                  ? 'Enviando...'
+                  : forgotCooldown > 0
+                  ? `Reenviar (${forgotCooldown}s)`
+                  : 'Reenviar código'}
               </button>
             </div>
           </div>
@@ -674,32 +695,95 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     )
   }
 
-  /* ── PANTALLA DE VERIFICACIÓN ── */
   if (verifying) {
     return (
       <Modal onClose={onClose}>
-        <div className="anim-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div
+          className="anim-fade-up"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 6,
+          }}
+        >
           <span style={{ fontSize: 20, fontWeight: 800 }}>Verifica tu correo</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}>✕</button>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}
+          >
+            ✕
+          </button>
         </div>
         <p className="anim-fade-up" style={{ fontSize: 13, color: '#666', marginBottom: 18, lineHeight: 1.6 }}>
-          Enviamos un código de 6 dígitos a <b>{regEmail.trim().toLowerCase()}</b>. Ingrésalo para activar tu cuenta.
+          Enviamos un código de 6 dígitos a <b>{regEmail.trim().toLowerCase()}</b>. Ingrésalo para
+          activar tu cuenta.
         </p>
         <div className={`anim-fade-up otp-row${otpErr ? ' anim-shake' : ''}`} style={{ marginBottom: 14 }}>
           {otpInputs.map((v, i) => (
-            <input key={i} id={`otp-${i}`} className="otp-box" maxLength={1} inputMode="numeric"
-              value={v} onChange={e => handleOtpChange(i, e.target.value)}
-              onKeyDown={e => handleOtpKeyDown(i, e)} autoFocus={i === 0} />
+            <input
+              key={i}
+              id={`otp-${i}`}
+              className="otp-box"
+              maxLength={1}
+              inputMode="numeric"
+              value={v}
+              onChange={(e) => handleOtpChange(i, e.target.value)}
+              onKeyDown={(e) => handleOtpKeyDown(i, e)}
+              autoFocus={i === 0}
+            />
           ))}
         </div>
-        {otpErr && <div className="anim-fade-up" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828', marginBottom: 12 }}>{otpErr}</div>}
+        {otpErr && (
+          <div
+            className="anim-fade-up"
+            style={{
+              background: 'rgba(198,40,40,.1)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 13,
+              color: '#c62828',
+              marginBottom: 12,
+            }}
+          >
+            {otpErr}
+          </div>
+        )}
         <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Btn full onClick={confirmOtp}>Verificar y crear cuenta</Btn>
+          <Btn full onClick={confirmOtp}>
+            Verificar y crear cuenta
+          </Btn>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: '#888' }}>
-            <button onClick={() => setVerifying(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12 }}>← Volver</button>
-            <button onClick={sendVerificationCode} disabled={sending || resendCooldown > 0}
-              style={{ background: 'none', border: 'none', cursor: resendCooldown > 0 ? 'default' : 'pointer', color: resendCooldown > 0 ? '#aaa' : '#1a1a1a', fontWeight: 700, fontSize: 12 }}>
-              {sending ? 'Enviando...' : resendCooldown > 0 ? `Reenviar (${resendCooldown}s)` : 'Reenviar código'}
+            <button
+              onClick={() => setVerifying(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#1a1a1a',
+                fontWeight: 700,
+                fontSize: 12,
+              }}
+            >
+              ← Volver
+            </button>
+            <button
+              onClick={sendVerificationCode}
+              disabled={sending || resendCooldown > 0}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: resendCooldown > 0 ? 'default' : 'pointer',
+                color: resendCooldown > 0 ? '#aaa' : '#1a1a1a',
+                fontWeight: 700,
+                fontSize: 12,
+              }}
+            >
+              {sending
+                ? 'Enviando...'
+                : resendCooldown > 0
+                ? `Reenviar (${resendCooldown}s)`
+                : 'Reenviar código'}
             </button>
           </div>
         </div>
@@ -711,40 +795,143 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     <Modal onClose={onClose}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <span style={{ fontSize: 20, fontWeight: 800 }}>Acceso</span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}>✕</button>
+        <button
+          onClick={onClose}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#888' }}
+        >
+          ✕
+        </button>
       </div>
       <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,.06)', borderRadius: 10, padding: 4, marginBottom: 16 }}>
         <Tab id="login" label="Iniciar sesión" />
         <Tab id="register" label="Registrarse" />
       </div>
-
       {tab === 'login' && (
         <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ background: 'rgba(26,26,26,.12)', border: '1px solid rgba(26,26,26,.25)', borderRadius: 8, padding: '10px 12px', fontSize: 12, lineHeight: 1.5 }}>
-            💡 <b>Demo:</b> cliente@demo.cl · Contraseña: 1234
-          </div>
-          {err && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{err}</div>}
-          <Field label="Correo electrónico" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="correo@ejemplo.cl" />
-          <Field label="Contraseña" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••" />
-          <button onClick={() => setForgotMode(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontWeight: 700, fontSize: 12, alignSelf: 'flex-end', marginTop: -6 }}>¿Olvidaste tu contraseña?</button>
-          <Btn full onClick={doLogin}>Iniciar sesión</Btn>
+          {err && (
+            <div
+              className="anim-shake"
+              style={{
+                background: 'rgba(198,40,40,.1)',
+                borderRadius: 8,
+                padding: '10px 12px',
+                fontSize: 13,
+                color: '#c62828',
+              }}
+            >
+              {err}
+            </div>
+          )}
+          <Field
+            label="Correo electrónico"
+            type="email"
+            value={loginEmail}
+            onChange={(e) => setLoginEmail(e.target.value)}
+            placeholder="correo@ejemplo.cl"
+          />
+          <Field
+            label="Contraseña"
+            type="password"
+            value={loginPass}
+            onChange={(e) => setLoginPass(e.target.value)}
+            placeholder="••••"
+          />
+          <button
+            onClick={() => setForgotMode(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#1a1a1a',
+              fontWeight: 700,
+              fontSize: 12,
+              alignSelf: 'flex-end',
+              marginTop: -6,
+            }}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+          <Btn full onClick={doLogin}>
+            Iniciar sesión
+          </Btn>
           <p style={{ textAlign: 'center', fontSize: 13, color: '#666' }}>
-            ¿No tienes cuenta? <a href="#" onClick={e => { e.preventDefault(); setTab('register') }} style={{ color: '#1a1a1a', fontWeight: 700 }}>Regístrate</a>
+            ¿No tienes cuenta?{' '}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                setTab('register')
+              }}
+              style={{ color: '#1a1a1a', fontWeight: 700 }}
+            >
+              Regístrate
+            </a>
           </p>
         </div>
       )}
-
       {tab === 'register' && (
         <div className="anim-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {regErr && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c62828' }}>{regErr}</div>}
-          <Field label="Nombres" value={regNombres} onChange={e => setRegNombres(e.target.value)} placeholder="Ej: Juan Carlos" />
-          <Field label="Apellidos" value={regApellidos} onChange={e => setRegApellidos(e.target.value)} placeholder="Ej: Pérez González" />
-          <Field label="Correo electrónico" type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="correo@ejemplo.cl" />
-          <Field label="Teléfono" value={regTel} onChange={e => setRegTel(formatPhone(e.target.value))} placeholder="+56 9 1234 5678" />
-          <Field label="Contraseña" type="password" value={regPass} onChange={e => setRegPass(e.target.value)} placeholder="Mínimo 4 carácteres" />
-          <Btn full onClick={doRegisterStart} disabled={sending}>{sending ? 'Enviando código...' : 'Crear cuenta'}</Btn>
+          {regErr && (
+            <div
+              className="anim-shake"
+              style={{
+                background: 'rgba(198,40,40,.1)',
+                borderRadius: 8,
+                padding: '10px 12px',
+                fontSize: 13,
+                color: '#c62828',
+              }}
+            >
+              {regErr}
+            </div>
+          )}
+          <Field
+            label="Nombres"
+            value={regNombres}
+            onChange={(e) => setRegNombres(e.target.value)}
+            placeholder="Ej: Juan Carlos"
+          />
+          <Field
+            label="Apellidos"
+            value={regApellidos}
+            onChange={(e) => setRegApellidos(e.target.value)}
+            placeholder="Ej: Pérez González"
+          />
+          <Field
+            label="Correo electrónico"
+            type="email"
+            value={regEmail}
+            onChange={(e) => setRegEmail(e.target.value)}
+            placeholder="correo@ejemplo.cl"
+          />
+          <Field
+            label="Teléfono"
+            value={regTel}
+            onChange={(e) => setRegTel(formatPhone(e.target.value))}
+            placeholder="+56 9 1234 5678"
+          />
+          <Field
+            label="Contraseña"
+            type="password"
+            value={regPass}
+            onChange={(e) => setRegPass(e.target.value)}
+            placeholder="Mínimo 4 carácteres"
+          />
+          <Btn full onClick={doRegisterStart} disabled={sending}>
+            {sending ? 'Enviando código...' : 'Crear cuenta'}
+          </Btn>
           <p style={{ textAlign: 'center', fontSize: 13, color: '#666' }}>
-            ¿Ya tienes cuenta? <a href="#" onClick={e => { e.preventDefault(); setTab('login') }} style={{ color: '#1a1a1a', fontWeight: 700 }}>Inicia sesión</a>
+            ¿Ya tienes cuenta?{' '}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                setTab('login')
+              }}
+              style={{ color: '#1a1a1a', fontWeight: 700 }}
+            >
+              Inicia sesión
+            </a>
           </p>
         </div>
       )}
@@ -752,136 +939,316 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
   )
 }
 
-/* ════════════════════════════════════════════════════════════
-   NAV
-   ════════════════════════════════════════════════════════════ */
 function Nav({ currentUser, onShowAuth, onLogout, onGoHome, onGoPerfil, onGoPedidos, onGoAdmin }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
-    const fn = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const fn = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
     document.addEventListener('mousedown', fn)
     return () => document.removeEventListener('mousedown', fn)
   }, [])
 
   return (
-    <nav style={{ height: 82, padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(205,205,205,.5)', background: 'rgba(255,255,255,.35)', borderRadius: '16px 16px 0 0', backdropFilter: 'blur(8px)', position: 'relative', zIndex: 300 }}>
+    <nav
+      style={{
+        height: 82,
+        padding: '0 26px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid rgba(205,205,205,.5)',
+        background: 'rgba(255,255,255,.35)',
+        borderRadius: '16px 16px 0 0',
+        backdropFilter: 'blur(8px)',
+        position: 'relative',
+        zIndex: 300,
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <a href="#" onClick={e => { e.preventDefault(); onGoHome() }} style={{ width: 42, height: 42, background: '#1a1a1a', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', textDecoration: 'none' }}>
-          <img src="/LOGO_LANDING.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; e.target.parentElement.textContent = '🪵' }} />
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault()
+            onGoHome()
+          }}
+          style={{
+            width: 42,
+            height: 42,
+            background: '#1a1a1a',
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            textDecoration: 'none',
+          }}
+        >
+          <img
+            src="/LOGO_LANDING.png"
+            alt="Logo"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={(e) => {
+              e.target.style.display = 'none'
+              e.target.parentElement.textContent = '🪵'
+            }}
+          />
         </a>
         <span style={{ fontSize: 26, fontWeight: 800 }}>Hernández Muebles</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
         <span style={{ fontSize: 14, color: 'rgba(42,42,42,.4)' }}>•</span>
-        {!currentUser
-          ? <Btn outline onClick={onShowAuth}><span style={{ fontSize: 18 }}>👤</span> Iniciar sesión</Btn>
-          : (
-            <div ref={ref} style={{ position: 'relative' }}>
-              <button onClick={() => setOpen(o => !o)} style={{ background: 'rgba(26,26,26,.15)', border: 'none', cursor: 'pointer', width: 38, height: 38, borderRadius: '50%', fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</button>
-              {open && (
-                <div style={{ position: 'absolute', right: 0, top: 46, minWidth: 210, background: 'rgba(255,255,255,.97)', border: '1px solid rgba(221,221,221,.8)', borderRadius: 10, padding: 8, zIndex: 600, boxShadow: '0 8px 24px rgba(0,0,0,.18)' }}>
-                  <div style={{ padding: '8px 10px 6px', fontSize: 13, fontWeight: 700, color: '#555', borderBottom: '1px solid #eee', marginBottom: 4 }}>
-                    {currentUser.nombres} {currentUser.apellidos}
-                    {currentUser.is_admin && <span style={{ marginLeft: 6, fontSize: 10, background: '#1a1a1a', color: '#fff', padding: '2px 6px', borderRadius: 4 }}>Admin</span>}
-                  </div>
-                  {[
-                    { icon: '👤', label: 'Perfil',            fn: () => { setOpen(false); onGoPerfil() } },
-                    { icon: '📋', label: 'Mis cotizaciones',   fn: () => { setOpen(false); onGoPedidos() } },
-                    ...(currentUser.is_admin ? [{ icon: '⚙️', label: 'Panel administrativo', fn: () => { setOpen(false); onGoAdmin() } }] : []),
-                  ].map(({ icon, label, fn }) => (
-                    <button key={label} onClick={fn} style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 14, display: 'flex', gap: 8 }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(247,239,232,.9)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                    >{icon} {label}</button>
-                  ))}
-                  <div style={{ borderTop: '1px solid #eee', marginTop: 4, paddingTop: 4 }}>
-                    <button onClick={() => { setOpen(false); onLogout() }} style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 14, color: '#b00020', display: 'flex', gap: 8 }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(247,239,232,.9)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                    >🚪 Cerrar sesión</button>
-                  </div>
+        {!currentUser ? (
+          <Btn outline onClick={onShowAuth}>
+            <span style={{ fontSize: 18 }}>👤</span> Iniciar sesión
+          </Btn>
+        ) : (
+          <div ref={ref} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setOpen((o) => !o)}
+              style={{
+                background: 'rgba(26,26,26,.15)',
+                border: 'none',
+                cursor: 'pointer',
+                width: 38,
+                height: 38,
+                borderRadius: '50%',
+                fontSize: 22,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              👤
+            </button>
+            {open && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 46,
+                  minWidth: 210,
+                  background: 'rgba(255,255,255,.97)',
+                  border: '1px solid rgba(221,221,221,.8)',
+                  borderRadius: 10,
+                  padding: 8,
+                  zIndex: 600,
+                  boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '8px 10px 6px',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#555',
+                    borderBottom: '1px solid #eee',
+                    marginBottom: 4,
+                  }}
+                >
+                  {currentUser.nombres} {currentUser.apellidos}
+                  {currentUser.is_admin && (
+                    <span
+                      style={{
+                        marginLeft: 6,
+                        fontSize: 10,
+                        background: '#1a1a1a',
+                        color: '#fff',
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                      }}
+                    >
+                      Admin
+                    </span>
+                  )}
                 </div>
-              )}
-            </div>
-          )
-        }
+                {[
+                  { icon: '👤', label: 'Perfil', fn: () => { setOpen(false); onGoPerfil() } },
+                  {
+                    icon: '📋',
+                    label: 'Mis cotizaciones',
+                    fn: () => { setOpen(false); onGoPedidos() },
+                  },
+                  ...(currentUser.is_admin
+                    ? [
+                        {
+                          icon: '⚙️',
+                          label: 'Panel administrativo',
+                          fn: () => { setOpen(false); onGoAdmin() },
+                        },
+                      ]
+                    : []),
+                ].map(({ icon, label, fn }) => (
+                  <button
+                    key={label}
+                    onClick={fn}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      padding: '9px 10px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      display: 'flex',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(247,239,232,.9)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    {icon} {label}
+                  </button>
+                ))}
+                <div style={{ borderTop: '1px solid #eee', marginTop: 4, paddingTop: 4 }}>
+                  <button
+                    onClick={() => { setOpen(false); onLogout() }}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      padding: '9px 10px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      color: '#b00020',
+                      display: 'flex',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(247,239,232,.9)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    🚪 Cerrar sesión
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   )
 }
 
-/* ════════════════════════════════════════════════════════════
-   PAGE HOME
-   ════════════════════════════════════════════════════════════ */
 function PageHome(props) {
   return (
     <Card>
       <Nav {...props} />
-
       <section className="hero-elegant">
         <div className="hero-overlay" />
         <div className="hero-content anim-pop">
-          <p className="anim-fade-up hero-kicker" style={{ animationDelay: '.05s' }}>Carpintería artesanal · Hecho a mano</p>
-          <h1 className="anim-fade-up hero-title-elegant" style={{ animationDelay: '.15s' }}>Muebles a medida<br />para tu hogar</h1>
+          <p className="anim-fade-up hero-kicker" style={{ animationDelay: '.05s' }}>
+            Carpintería artesanal · Hecho a mano
+          </p>
+          <h1 className="anim-fade-up hero-title-elegant" style={{ animationDelay: '.15s' }}>
+            Muebles a medida
+            <br />
+            para tu hogar
+          </h1>
           <p className="anim-fade-up hero-sub" style={{ animationDelay: '.25s' }}>
-            Diseño, materiales y terminaciones pensados para tu espacio. Cotiza en minutos y recibe un mueble hecho exclusivamente para ti.
+            Diseño, materiales y terminaciones pensados para tu espacio. Cotiza en minutos y recibe
+            un mueble hecho exclusivamente para ti.
           </p>
         </div>
       </section>
-
       <section style={{ padding: '54px 28px 60px' }}>
         <div className="anim-fade-up" style={{ textAlign: 'center', marginBottom: 38 }}>
-          <p style={{ fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#999', fontWeight: 700, marginBottom: 8 }}>Nuestro proceso</p>
-          <h2 style={{ fontSize: 'clamp(22px,3.4vw,32px)', color: '#1a1a1a', fontWeight: 800 }}>Simple, transparente y a tu medida</h2>
+          <p
+            style={{
+              fontSize: 12,
+              letterSpacing: 3,
+              textTransform: 'uppercase',
+              color: '#999',
+              fontWeight: 700,
+              marginBottom: 8,
+            }}
+          >
+            Nuestro proceso
+          </p>
+          <h2 style={{ fontSize: 'clamp(22px,3.4vw,32px)', color: '#1a1a1a', fontWeight: 800 }}>
+            Simple, transparente y a tu medida
+          </h2>
         </div>
         <div className="feature-grid">
           {[
-            { icon: '✏️', title: 'Cotiza online', text: 'Selecciona el tipo de mueble, sus medidas y materiales en un par de minutos.' },
-            { icon: '🪵', title: 'Materiales premium', text: 'Melamina y MDF de alta densidad, con una amplia paleta de colores y texturas.' },
-            { icon: '🤝', title: 'Seguimiento real', text: 'Sigue cada etapa de tu pedido desde la cotización hasta la entrega final.' },
+            {
+              title: 'Cotiza online',
+              text: 'Selecciona el tipo de mueble, sus medidas y materiales en un par de minutos.',
+            },
+            {
+              title: 'Materiales premium',
+              text: 'Melamina y MDF de alta densidad, con una amplia paleta de colores y texturas.',
+            },
+            {
+              title: 'Seguimiento real',
+              text: 'Sigue cada etapa de tu pedido desde la cotización hasta la entrega final.',
+            },
           ].map((f, i) => (
-            <div key={f.title} className="feature-card anim-fade-up" style={{ animationDelay: `${.1 + i * .12}s` }}>
-              <div className="feature-icon">{f.icon}</div>
-              <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 6, color: '#1a1a1a' }}>{f.title}</h3>
+            <div
+              key={f.title}
+              className="feature-card anim-fade-up"
+              style={{ animationDelay: `${0.1 + i * 0.12}s` }}
+            >
+              <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 6, color: '#1a1a1a' }}>
+                {f.title}
+              </h3>
               <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>{f.text}</p>
             </div>
           ))}
         </div>
       </section>
-
       <section className="cta-elegant anim-fade-up">
-        <h2 style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, marginBottom: 10 }}>¿Listo para tu próximo mueble?</h2>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,.7)', marginBottom: 22, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+        <h2 style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, marginBottom: 10 }}>
+          ¿Listo para tu próximo mueble?
+        </h2>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'rgba(255,255,255,.7)',
+            marginBottom: 22,
+            maxWidth: 480,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+        >
           Cuéntanos qué necesitas y te enviaremos una cotización personalizada sin compromiso.
         </p>
-        <button className="hero-btn-primary" style={{ background: '#fff', color: '#111' }} onClick={props.onCotizar}>Comenzar cotización</button>
+        <button
+          className="hero-btn-primary"
+          style={{ background: '#fff', color: '#111' }}
+          onClick={props.onCotizar}
+        >
+          Comenzar cotización
+        </button>
       </section>
     </Card>
   )
 }
 
-
-/* ════════════════════════════════════════════════════════════
-   MODAL COTIZAR — diseño moderno (2 pasos)
-   ════════════════════════════════════════════════════════════ */
-const TIPOS_MUEBLE = ['Escritorio', 'Cocina', 'Baño', 'Otro']
-
-function ModalCotizar({ currentUser, onClose, onSubmit }) {
+function ModalCotizar({ currentUser, onClose, onSubmit, coloresDB = [] }) {
   const initial = {
-    tipo: '', tipoOtro: '',
-    largo: '', ancho: '', prof: '',
-    material: '', mdfTipo: MDF_GROSORES[0], colorMel: null,
-    comentarios: '', file: null, filePreview: null,
+    tipo: '',
+    tipoOtro: '',
+    largo: '',
+    ancho: '',
+    prof: '',
+    material: '',
+    mdfTipo: MDF_GROSORES[0],
+    colorMel: null,
+    comentarios: '',
+    file: null,
+    filePreview: null,
   }
-  const [data, setData]   = useState(initial)
-  const [step, setStep]   = useState('form')
-  const [err, setErr]     = useState('')
+  const [data, setData] = useState(initial)
+  const [step, setStep] = useState('form')
+  const [err, setErr] = useState('')
   const [lastCot, setLastCot] = useState(null)
   const [resetting, setResetting] = useState(false)
 
-  const set = (k, v) => setData(prev => ({ ...prev, [k]: v }))
+  const set = (k, v) => setData((prev) => ({ ...prev, [k]: v }))
 
   function handleReset() {
     setResetting(true)
@@ -894,29 +1261,58 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
     const f = e.target.files[0]
     if (!f) return
     const ok = ['image/png', 'image/jpeg']
-    if (!ok.includes(f.type)) { setErr('Solo se aceptan imágenes PNG o JPG.'); return }
-    if (f.size > 5 * 1024 * 1024) { setErr('La imagen supera 5 MB.'); return }
+    if (!ok.includes(f.type)) {
+      setErr('Solo se aceptan imágenes PNG o JPG.')
+      return
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      setErr('La imagen supera 5 MB.')
+      return
+    }
     setErr('')
     const reader = new FileReader()
-    reader.onload = ev => setData(prev => ({ ...prev, file: f, filePreview: ev.target.result }))
+    reader.onload = (ev) => setData((prev) => ({ ...prev, file: f, filePreview: ev.target.result }))
     reader.readAsDataURL(f)
   }
-  function removeFile() { setData(prev => ({ ...prev, file: null, filePreview: null })) }
+
+  function removeFile() {
+    setData((prev) => ({ ...prev, file: null, filePreview: null }))
+  }
 
   function materialLabel() {
     if (!data.material) return '—'
-    if (data.material === 'Melamina') return data.colorMel ? `Melamina 15 mm — ${data.colorMel.nombre}` : 'Melamina 15 mm'
+    if (data.material === 'Melamina')
+      return data.colorMel ? `Melamina 15 mm — ${data.colorMel.nombre}` : 'Melamina 15 mm'
     return data.mdfTipo
   }
 
   function goResumen() {
-    if (!data.tipo) { setErr('Selecciona un tipo de mueble.'); return }
-    if (data.tipo === 'Otro' && !data.tipoOtro.trim()) { setErr('Especifica el tipo de mueble.'); return }
-    if (!data.filePreview) { setErr('Debes adjuntar una imagen de referencia. Es obligatoria.'); return }
-    if (!data.largo || !data.ancho || !data.prof) { setErr('Completa las medidas (largo, ancho y altura).'); return }
-    if (!data.material) { setErr('Selecciona un material.'); return }
-    if (data.material === 'Melamina' && !data.colorMel) { setErr('Selecciona un color de melamina.'); return }
-    setErr(''); setStep('resumen')
+    if (!data.tipo) {
+      setErr('Selecciona un tipo de mueble.')
+      return
+    }
+    if (data.tipo === 'Otro' && !data.tipoOtro.trim()) {
+      setErr('Especifica el tipo de mueble.')
+      return
+    }
+    if (!data.filePreview) {
+      setErr('Debes adjuntar una imagen de referencia. Es obligatoria.')
+      return
+    }
+    if (!data.largo || !data.ancho || !data.prof) {
+      setErr('Completa las medidas (largo, ancho y altura).')
+      return
+    }
+    if (!data.material) {
+      setErr('Selecciona un material.')
+      return
+    }
+    if (data.material === 'Melamina' && !data.colorMel) {
+      setErr('Selecciona un color de melamina.')
+      return
+    }
+    setErr('')
+    setStep('resumen')
   }
 
   function handleSubmit() {
@@ -929,17 +1325,20 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
       clienteEmail: (currentUser?.email || '').toLowerCase(),
       nombre: `${currentUser?.nombres || ''} ${currentUser?.apellidos || ''}`.trim(),
       email: (currentUser?.email || '').toLowerCase(),
-      número, tipo: tipoFinal, tipoOtro: data.tipoOtro || '',
-      diseñoId: '', diseñoTitulo: data.tipo === 'Otro' ? 'Mueble personalizado (ver imagen adjunta)' : '',
-      dim: { 
-        ancho: Number(data.largo) || 0, 
-        alto: Number(data.ancho) || 0, 
-        prof: Number(data.prof) || 0 
+      número,
+      tipo: tipoFinal,
+      tipoOtro: data.tipoOtro || '',
+      diseñoId: '',
+      diseñoTitulo: data.tipo === 'Otro' ? 'Mueble personalizado (ver imagen adjunta)' : '',
+      dim: {
+        ancho: Number(data.largo) || 0,
+        alto: Number(data.ancho) || 0,
+        prof: Number(data.prof) || 0,
       },
-      material: materialLabel(), 
+      material: materialLabel(),
       color: data.colorMel?.nombre || '',
-      colorHex: data.colorMel?.hex || '', 
-      colorTextura: data.colorMel?.texture || null, 
+      colorHex: data.colorMel?.hex || '',
+      colorTextura: data.colorMel?.texture || null,
       colorGrain: data.colorMel?.grain || null,
       descripción: data.comentarios || '',
       adjunto: data.file ? { nombre: data.file.name, tipo: data.file.type, size: data.file.size } : null,
@@ -953,35 +1352,76 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
     setStep('done')
   }
 
+  const dimsLabels = [
+    ['largo', 'Largo'],
+    ['ancho', 'Ancho'],
+    ['prof', 'Altura'],
+  ]
+
   if (step === 'done' && lastCot) {
     return (
       <div className="cz-overlay anim-overlay">
         <div className="cz-shell anim-pop" style={{ maxWidth: 560 }}>
           <div className="cz-topbar">
             <div />
-            <button className="cz-icon-btn" onClick={onClose} title="Cerrar">✕</button>
+            <button className="cz-icon-btn" onClick={onClose} title="Cerrar">
+              ✕
+            </button>
           </div>
           <div className="cz-body anim-fade-up" style={{ textAlign: 'center', padding: '10px 24px 30px' }}>
             <div style={{ fontSize: 52, marginBottom: 10 }}>✅</div>
             <h3 style={{ fontSize: 22, marginBottom: 6, color: '#222222' }}>¡Cotización enviada!</h3>
-            <p style={{ color: '#666', marginBottom: 18, fontSize: 14 }}>Tu solicitud fue recibida. Te contactaremos pronto.</p>
+            <p style={{ color: '#666', marginBottom: 18, fontSize: 14 }}>
+              Tu solicitud fue recibida. Te contactaremos pronto.
+            </p>
             <div className="cz-summary-card" style={{ textAlign: 'left', marginBottom: 18 }}>
-              <div className="cz-summary-row"><span>Código</span><b style={{ color: '#1a1a1a' }}>{lastCot.código}</b></div>
-              <div className="cz-summary-row"><span>Tipo</span><b>{lastCot.tipo}</b></div>
-              <div className="cz-summary-row"><span>Medidas</span><b>{lastCot.dim.ancho} × {lastCot.dim.alto} × {lastCot.dim.prof} cm</b></div>
-              <div className="cz-summary-row"><span>Material</span><b>{lastCot.material}</b></div>
+              <div className="cz-summary-row">
+                <span>Código</span>
+                <b style={{ color: '#1a1a1a' }}>{lastCot.código}</b>
+              </div>
+              <div className="cz-summary-row">
+                <span>Tipo</span>
+                <b>{lastCot.tipo}</b>
+              </div>
+              <div className="cz-summary-row">
+                <span>Medidas</span>
+                <b>
+                  {lastCot.dim.ancho} × {lastCot.dim.alto} × {lastCot.dim.prof} cm
+                </b>
+              </div>
+              <div className="cz-summary-row">
+                <span>Material</span>
+                <b>{lastCot.material}</b>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button className="cz-btn cz-btn-primary" onClick={onClose}>Volver al inicio</button>
-              <button className="cz-btn cz-btn-ghost" onClick={async () => {
-                try {
-                  const res = await fetch('/api/pdf/cotizacion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastCot) })
-                  if (!res.ok) throw new Error('Error al generar PDF')
-                  const blob = await res.blob()
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a'); a.href = url; a.download = `COTIZACION_${lastCot.código}.pdf`; a.click(); URL.revokeObjectURL(url)
-                } catch (e) { alert('No se pudo generar el PDF: ' + e.message) }
-              }}>⬇ Descargar PDF</button>
+              <button className="cz-btn cz-btn-primary" onClick={onClose}>
+                Volver al inicio
+              </button>
+              <button
+                className="cz-btn cz-btn-ghost"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/pdf/cotizacion', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(lastCot),
+                    })
+                    if (!res.ok) throw new Error('Error al generar PDF')
+                    const blob = await res.blob()
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `COTIZACION_${lastCot.código}.pdf`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                  } catch (e) {
+                    alert('No se pudo generar el PDF: ' + e.message)
+                  }
+                }}
+              >
+                ⬇ Descargar PDF
+              </button>
             </div>
           </div>
         </div>
@@ -989,63 +1429,107 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
     )
   }
 
-  const dimsLabels = [['largo', 'Largo'], ['ancho', 'Ancho'], ['prof', 'Altura']]
-
   return (
     <div className="cz-overlay anim-overlay">
       <div className="cz-shell anim-pop">
         <div className="cz-topbar">
-          <button className="cz-icon-btn" onClick={() => step === 'resumen' ? setStep('form') : onClose()} title="Volver">←</button>
+          <button
+            className="cz-icon-btn"
+            onClick={() => (step === 'resumen' ? setStep('form') : onClose())}
+            title="Volver"
+          >
+            ←
+          </button>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className={`cz-icon-btn${resetting ? ' spinning' : ''}`} onClick={handleReset} title="Reiniciar formulario">⟲</button>
-            <button className="cz-icon-btn" onClick={onClose} title="Cerrar">✕</button>
+            <button
+              className={`cz-icon-btn${resetting ? ' spinning' : ''}`}
+              onClick={handleReset}
+              title="Reiniciar formulario"
+            >
+              ⟲
+            </button>
+            <button className="cz-icon-btn" onClick={onClose} title="Cerrar">
+              ✕
+            </button>
           </div>
         </div>
-
         {err && (
-          <div className="anim-shake" style={{ margin: '0 24px 12px', background: 'rgba(198,40,40,.1)', color: '#c62828', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600 }}>
+          <div
+            className="anim-shake"
+            style={{
+              margin: '0 24px 12px',
+              background: 'rgba(198,40,40,.1)',
+              color: '#c62828',
+              borderRadius: 10,
+              padding: '10px 14px',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
             {err}
           </div>
         )}
-
         <div className="cz-body">
           {step === 'form' && (
             <div className="cz-grid">
               <div className="anim-slide-l cz-tipo-list">
-                {TIPOS_MUEBLE.map(t => (
-                  <div key={t} className={`cz-tipo-item${data.tipo === t ? ' selected' : ''}`}
-                    onClick={() => { set('tipo', t); if (t !== 'Otro') set('tipoOtro', '') }}>
+                {TIPOS_MUEBLE.map((t) => (
+                  <div
+                    key={t}
+                    className={`cz-tipo-item${data.tipo === t ? ' selected' : ''}`}
+                    onClick={() => {
+                      set('tipo', t)
+                      if (t !== 'Otro') set('tipoOtro', '')
+                    }}
+                  >
                     <span className="cz-tipo-title">{t}</span>
                     <span className="cz-radio" />
                   </div>
                 ))}
               </div>
-
               <div className="anim-slide-r cz-panel">
                 {!data.tipo ? (
-                  <div className="cz-panel-empty">Selecciona un tipo de mueble<br />para continuar con los detalles</div>
+                  <div className="cz-panel-empty">
+                    Selecciona un tipo de mueble
+                    <br />
+                    para continuar con los detalles
+                  </div>
                 ) : (
                   <>
                     {data.tipo === 'Otro' && (
                       <div className="cz-field" style={{ position: 'relative', zIndex: 1 }}>
                         <label>Tipo de mueble</label>
-                        <input value={data.tipoOtro} onChange={e => set('tipoOtro', e.target.value)} placeholder="Ej: Estantería flotante, closet, etc." />
+                        <input
+                          value={data.tipoOtro}
+                          onChange={(e) => set('tipoOtro', e.target.value)}
+                          placeholder="Ej: Estantería flotante, closet, etc."
+                        />
                       </div>
                     )}
-
                     <div className="cz-row3">
                       {dimsLabels.map(([key, label]) => (
                         <div className="cz-field" key={key}>
                           <label>{label} (cm)</label>
-                          <input type="number" min="0" value={data[key]} onChange={e => set(key, e.target.value)} placeholder="0" />
+                          <input
+                            type="number"
+                            min="0"
+                            value={data[key]}
+                            onChange={(e) => set(key, e.target.value)}
+                            placeholder="0"
+                          />
                         </div>
                       ))}
                     </div>
-
                     <div className="cz-row2">
                       <div className="cz-field">
                         <label>Material</label>
-                        <select value={data.material} onChange={e => { set('material', e.target.value); if (e.target.value !== 'Melamina') set('colorMel', null) }}>
+                        <select
+                          value={data.material}
+                          onChange={(e) => {
+                            set('material', e.target.value)
+                            if (e.target.value !== 'Melamina') set('colorMel', null)
+                          }}
+                        >
                           <option value="">Selecciona</option>
                           <option value="Melamina">Melamina (15 mm)</option>
                           <option value="MDF">MDF melamínico</option>
@@ -1054,38 +1538,63 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
                       <div className="cz-field">
                         <label>Color</label>
                         {data.material === 'MDF' ? (
-                          <select value={data.mdfTipo} onChange={e => set('mdfTipo', e.target.value)}>
-                            {MDF_GROSORES.map(g => <option key={g} value={g}>{g}</option>)}
+                          <select value={data.mdfTipo} onChange={(e) => set('mdfTipo', e.target.value)}>
+                            {MDF_GROSORES.map((g) => (
+                              <option key={g} value={g}>
+                                {g}
+                              </option>
+                            ))}
                           </select>
                         ) : (
                           <div style={{ fontSize: 13, color: 'rgba(243,230,216,.55)', paddingTop: 8 }}>
-                            {data.material === 'Melamina' ? (data.colorMel ? data.colorMel.nombre : 'Elige abajo ↓') : '—'}
+                            {data.material === 'Melamina'
+                              ? data.colorMel
+                                ? data.colorMel.nombre
+                                : 'Elige abajo ↓'
+                              : '—'}
                           </div>
                         )}
                       </div>
                     </div>
-
                     {data.material === 'Melamina' && (
                       <div className="cz-swatches">
-                        {Object.values(MELAMINA_COLORES).flat().map(c => {
-                          const sel = data.colorMel?.nombre === c.nombre
-                          const bg = c.texture && c.grain ? `url("${makeWoodTextureSVG(c.hex, c.grain, 30)}") center/cover` : c.hex
-                          return <div key={c.nombre} className={`cz-swatch${sel ? ' selected' : ''}`} style={{ background: bg }} title={c.nombre} onClick={() => set('colorMel', c)} />
-                        })}
+                        {coloresDB && coloresDB.length > 0 ? (
+                          coloresDB.map((c) => {
+                            const sel = data.colorMel?.nombre === c.nombre
+                            const bg = c.hex || '#ccc'
+                            return (
+                              <div
+                                key={c.nombre}
+                                className={`cz-swatch${sel ? ' selected' : ''}`}
+                                style={{ background: bg }}
+                                title={c.nombre}
+                                onClick={() => set('colorMel', c)}
+                              />
+                            )
+                          })
+                        ) : (
+                          <p style={{ color: '#888', fontSize: 12, width: '100%', textAlign: 'center' }}>
+                            ⏳ Cargando colores...
+                          </p>
+                        )}
                       </div>
                     )}
-
                     <div className="cz-field" style={{ position: 'relative', zIndex: 1 }}>
                       <label>Comentarios</label>
-                      <textarea rows={3} value={data.comentarios} onChange={e => set('comentarios', e.target.value)} placeholder="Describe cualquier detalle especial..." />
+                      <textarea
+                        rows={3}
+                        value={data.comentarios}
+                        onChange={(e) => set('comentarios', e.target.value)}
+                        placeholder="Describe cualquier detalle especial..."
+                      />
                     </div>
-
                     <label className={`cz-upload${!data.filePreview ? ' required' : ''}`}>
                       <input type="file" accept=".png,.jpg,.jpeg" onChange={handleFile} />
-                      {data.filePreview
-                        ? <img className="cz-upload-thumb" src={data.filePreview} alt="referencia" />
-                        : <span style={{ fontSize: 20 }}>📎</span>
-                      }
+                      {data.filePreview ? (
+                        <img className="cz-upload-thumb" src={data.filePreview} alt="referencia" />
+                      ) : (
+                        <span style={{ fontSize: 20 }}>📎</span>
+                      )}
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 700 }}>
                           {data.filePreview ? data.file?.name : 'Agregar imagen de referencia'}
@@ -1095,7 +1604,15 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
                         </div>
                       </div>
                       {data.filePreview && (
-                        <span onClick={e => { e.preventDefault(); removeFile() }} style={{ color: '#e08a8a', fontWeight: 800, cursor: 'pointer', padding: 4 }}>✕</span>
+                        <span
+                          onClick={(e) => {
+                            e.preventDefault()
+                            removeFile()
+                          }}
+                          style={{ color: '#e08a8a', fontWeight: 800, cursor: 'pointer', padding: 4 }}
+                        >
+                          ✕
+                        </span>
                       )}
                     </label>
                   </>
@@ -1103,7 +1620,6 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
               </div>
             </div>
           )}
-
           {step === 'resumen' && (
             <div className="cz-summary-card" style={{ maxWidth: 620, margin: '0 auto' }}>
               <h3 style={{ fontSize: 19, marginBottom: 14, color: '#222222' }}>Resumen de tu cotización</h3>
@@ -1113,31 +1629,72 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
                 ['Material', materialLabel()],
                 ['Comentarios', data.comentarios || '—'],
               ].map(([k, v]) => (
-                <div className="cz-summary-row" key={k}><span>{k}</span><b style={{ textAlign: 'right', maxWidth: '60%' }}>{v}</b></div>
+                <div className="cz-summary-row" key={k}>
+                  <span>{k}</span>
+                  <b style={{ textAlign: 'right', maxWidth: '60%' }}>{v}</b>
+                </div>
               ))}
               {data.filePreview && (
                 <div style={{ marginTop: 14 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Imagen adjunta</p>
-                  <img src={data.filePreview} alt="referencia" style={{ maxWidth: 220, maxHeight: 150, borderRadius: 10, border: '2px solid #1a1a1a', objectFit: 'cover', display: 'block' }} />
+                  <p
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: '#1a1a1a',
+                      textTransform: 'uppercase',
+                      letterSpacing: 1,
+                      marginBottom: 6,
+                    }}
+                  >
+                    Imagen adjunta
+                  </p>
+                  <img
+                    src={data.filePreview}
+                    alt="referencia"
+                    style={{
+                      maxWidth: 220,
+                      maxHeight: 150,
+                      borderRadius: 10,
+                      border: '2px solid #1a1a1a',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
                 </div>
               )}
-              <div style={{ marginTop: 16, padding: '10px 12px', background: 'rgba(26,26,26,.08)', borderRadius: 10, fontSize: 12, color: '#222222', lineHeight: 1.6 }}>
-                Se enviará a nombre de <b>{currentUser?.nombres} {currentUser?.apellidos}</b> ({currentUser?.email}).
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: '10px 12px',
+                  background: 'rgba(26,26,26,.08)',
+                  borderRadius: 10,
+                  fontSize: 12,
+                  color: '#222222',
+                  lineHeight: 1.6,
+                }}
+              >
+                Se enviará a nombre de <b>{currentUser?.nombres} {currentUser?.apellidos}</b> (
+                {currentUser?.email}).
               </div>
             </div>
           )}
         </div>
-
         <div className="cz-footer">
           {step === 'form' ? (
             <>
               <span style={{ fontSize: 12, color: '#1a1a1a', fontWeight: 700 }}>Paso 1 de 2</span>
-              <button className="cz-btn cz-btn-primary" onClick={goResumen}>Siguiente →</button>
+              <button className="cz-btn cz-btn-primary" onClick={goResumen}>
+                Siguiente →
+              </button>
             </>
           ) : (
             <>
-              <button className="cz-btn cz-btn-ghost" onClick={() => setStep('form')}>← Atrás</button>
-              <button className="cz-btn cz-btn-primary" onClick={handleSubmit}>Enviar cotización ✓</button>
+              <button className="cz-btn cz-btn-ghost" onClick={() => setStep('form')}>
+                ← Atrás
+              </button>
+              <button className="cz-btn cz-btn-primary" onClick={handleSubmit}>
+                Enviar cotización ✓
+              </button>
             </>
           )}
         </div>
@@ -1146,28 +1703,25 @@ function ModalCotizar({ currentUser, onClose, onSubmit }) {
   )
 }
 
-
-/* ════════════════════════════════════════════════════════════
-   PAGE CLIENTE
-   ════════════════════════════════════════════════════════════ */
 function PageCliente({ currentUser, cotizaciones, onBack, onSendMsg, initialPanel, onUpdateProfile, onChangePassword }) {
   const [panel, setPanel] = useState(initialPanel || 'perfil')
   const [selectedId, setSelectedId] = useState(null)
   const [chatMsg, setChatMsg] = useState('')
-
-  const [editNombres, setEditNombres]     = useState(currentUser.nombres || '')
+  const [editNombres, setEditNombres] = useState(currentUser.nombres || '')
   const [editApellidos, setEditApellidos] = useState(currentUser.apellidos || '')
-  const [editTel, setEditTel]             = useState(currentUser.telefono || '+56 9 ')
-  const [profileMsg, setProfileMsg]       = useState('')
-
+  const [editTel, setEditTel] = useState(currentUser.telefono || '+56 9 ')
+  const [profileMsg, setProfileMsg] = useState('')
   const [passActual, setPassActual] = useState('')
-  const [passNueva, setPassNueva]   = useState('')
+  const [passNueva, setPassNueva] = useState('')
   const [passConfirma, setPassConfirma] = useState('')
-  const [passMsg, setPassMsg]       = useState('')
-  const [passErr, setPassErr]       = useState('')
+  const [passMsg, setPassMsg] = useState('')
+  const [passErr, setPassErr] = useState('')
 
   async function saveProfile() {
-    if (!editNombres.trim() || !editApellidos.trim()) { setProfileMsg('❌ Nombres y apellidos no pueden estar vacíos.'); return }
+    if (!editNombres.trim() || !editApellidos.trim()) {
+      setProfileMsg('❌ Nombres y apellidos no pueden estar vacíos.')
+      return
+    }
     try {
       const res = await fetch(`/api/clientes/${currentUser.id}`, {
         method: 'PATCH',
@@ -1175,8 +1729,8 @@ function PageCliente({ currentUser, cotizaciones, onBack, onSendMsg, initialPane
         body: JSON.stringify({
           nombres: editNombres.trim(),
           apellidos: editApellidos.trim(),
-          telefono: editTel
-        })
+          telefono: editTel,
+        }),
       })
       const data = await res.json()
       if (data.cliente) {
@@ -1193,8 +1747,14 @@ function PageCliente({ currentUser, cotizaciones, onBack, onSendMsg, initialPane
 
   async function savePassword() {
     setPassMsg('')
-    if (passNueva.length < 4) { setPassErr('La nueva contraseña debe tener al menos 4 carácteres.'); return }
-    if (passNueva !== passConfirma) { setPassErr('Las contraseñas no coinciden.'); return }
+    if (passNueva.length < 4) {
+      setPassErr('La nueva contraseña debe tener al menos 4 carácteres.')
+      return
+    }
+    if (passNueva !== passConfirma) {
+      setPassErr('Las contraseñas no coinciden.')
+      return
+    }
     setPassErr('')
     try {
       const res = await fetch(`/api/clientes/${currentUser.id}`, {
@@ -1202,13 +1762,15 @@ function PageCliente({ currentUser, cotizaciones, onBack, onSendMsg, initialPane
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           oldPassword: passActual,
-          newPassword: passNueva
-        })
+          newPassword: passNueva,
+        }),
       })
       const data = await res.json()
       if (data.cliente) {
         onChangePassword?.(passNueva)
-        setPassActual(''); setPassNueva(''); setPassConfirma('')
+        setPassActual('')
+        setPassNueva('')
+        setPassConfirma('')
         setPassMsg('✅ Contraseña actualizada correctamente.')
         setTimeout(() => setPassMsg(''), 2500)
       } else {
@@ -1219,107 +1781,311 @@ function PageCliente({ currentUser, cotizaciones, onBack, onSendMsg, initialPane
     }
   }
 
-  const misCots = cotizaciones.filter(c => c.clienteEmail === currentUser.email || c.email === currentUser.email)
+  const misCots = cotizaciones.filter((c) => c.clienteEmail === currentUser.email || c.email === currentUser.email)
 
   useEffect(() => {
     if (misCots.length && !selectedId) setSelectedId(misCots[0].id)
   }, [misCots.length])
 
-  const cot = misCots.find(c => c.id === selectedId)
+  const cot = misCots.find((c) => c.id === selectedId)
 
   const SideBtn = ({ id, icon, label }) => (
-    <button onClick={() => setPanel(id)} style={{ width: '100%', textAlign: 'left', background: panel === id ? 'rgba(255,255,255,.15)' : 'none', border: 'none', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, color: panel === id ? '#fff' : '#d4b890', fontSize: 13, fontWeight: 700, display: 'flex', gap: 8, alignItems: 'center' }}
-      onMouseEnter={e => e.currentTarget.style.background = panel === id ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.08)'}
-      onMouseLeave={e => e.currentTarget.style.background = panel === id ? 'rgba(255,255,255,.15)' : 'none'}
-    >{icon} {label}</button>
+    <button
+      onClick={() => setPanel(id)}
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        background: panel === id ? 'rgba(255,255,255,.15)' : 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '10px 12px',
+        borderRadius: 8,
+        color: panel === id ? '#fff' : '#d4b890',
+        fontSize: 13,
+        fontWeight: 700,
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+      }}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.background = panel === id ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.08)')
+      }
+      onMouseLeave={(e) =>
+        (e.currentTarget.style.background = panel === id ? 'rgba(255,255,255,.15)' : 'none')
+      }
+    >
+      {icon} {label}
+    </button>
   )
 
   return (
     <Card>
-      <nav style={{ height: 64, padding: '0 22px', display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(205,205,205,.5)', background: 'rgba(255,255,255,.45)', backdropFilter: 'blur(8px)' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 28, marginRight: 8 }}>←</button>
+      <nav
+        style={{
+          height: 64,
+          padding: '0 22px',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: '1px solid rgba(205,205,205,.5)',
+          background: 'rgba(255,255,255,.45)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <button
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 28, marginRight: 8 }}
+        >
+          ←
+        </button>
         <span style={{ fontSize: 22, fontWeight: 800 }}>Mi cuenta</span>
       </nav>
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 14, padding: 18 }}>
-        
-        <div style={{ background: 'rgba(15,15,15,.75)', color: '#e8e8e8', borderRadius: 14, padding: 16, backdropFilter: 'blur(10px)' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+        <div
+          style={{
+            background: 'rgba(15,15,15,.75)',
+            color: '#e8e8e8',
+            borderRadius: 14,
+            padding: 16,
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              marginBottom: 12,
+              paddingBottom: 10,
+              borderBottom: '1px solid rgba(255,255,255,.1)',
+            }}
+          >
             {currentUser.nombres} {currentUser.apellidos}
           </div>
-          <SideBtn id="perfil"   icon="👤" label="Perfil" />
-          <SideBtn id="pedidos"  icon="📋" label="Mis pedidos" />
+          <SideBtn id="perfil" icon="👤" label="Perfil" />
+          <SideBtn id="pedidos" icon="📋" label="Mis pedidos" />
         </div>
-
-        
         <div>
           {panel === 'perfil' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <Card className="anim-fade-up" style={{ padding: 24 }}>
                 <h3 style={{ fontWeight: 800, marginBottom: 16, color: '#222222' }}>Mis datos</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                  <Field label="Nombres" value={editNombres} onChange={e => setEditNombres(e.target.value)} />
-                  <Field label="Apellidos" value={editApellidos} onChange={e => setEditApellidos(e.target.value)} />
+                  <Field
+                    label="Nombres"
+                    value={editNombres}
+                    onChange={(e) => setEditNombres(e.target.value)}
+                  />
+                  <Field
+                    label="Apellidos"
+                    value={editApellidos}
+                    onChange={(e) => setEditApellidos(e.target.value)}
+                  />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                  <Field label="Correo electrónico" value={currentUser.email} onChange={() => {}} disabled />
-                  <Field label="Teléfono" value={editTel} onChange={e => setEditTel(formatPhone(e.target.value))} />
+                  <Field
+                    label="Correo electrónico"
+                    value={currentUser.email}
+                    onChange={() => {}}
+                    disabled
+                  />
+                  <Field
+                    label="Teléfono"
+                    value={editTel}
+                    onChange={(e) => setEditTel(formatPhone(e.target.value))}
+                  />
                 </div>
-                {profileMsg && <div className="anim-fade-up" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: profileMsg.startsWith('✅') ? '#2e7d32' : '#c62828' }}>{profileMsg}</div>}
+                {profileMsg && (
+                  <div
+                    className="anim-fade-up"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      marginBottom: 10,
+                      color: profileMsg.startsWith('✅') ? '#2e7d32' : '#c62828',
+                    }}
+                  >
+                    {profileMsg}
+                  </div>
+                )}
                 <Btn onClick={saveProfile}>Guardar cambios</Btn>
               </Card>
-
               <Card className="anim-fade-up" style={{ padding: 24 }}>
                 <h3 style={{ fontWeight: 800, marginBottom: 16, color: '#222222' }}>Cambiar contraseña</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 360 }}>
-                  <Field label="Contraseña actual" type="password" value={passActual} onChange={e => setPassActual(e.target.value)} placeholder="••••" />
-                  <Field label="Nueva contraseña" type="password" value={passNueva} onChange={e => setPassNueva(e.target.value)} placeholder="Mínimo 4 carácteres" />
-                  <Field label="Confirmar nueva contraseña" type="password" value={passConfirma} onChange={e => setPassConfirma(e.target.value)} placeholder="••••" />
-                  {passErr && <div className="anim-shake" style={{ background: 'rgba(198,40,40,.1)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#c62828' }}>{passErr}</div>}
-                  {passMsg && <div className="anim-fade-up" style={{ fontSize: 13, fontWeight: 700, color: '#2e7d32' }}>{passMsg}</div>}
+                  <Field
+                    label="Contraseña actual"
+                    type="password"
+                    value={passActual}
+                    onChange={(e) => setPassActual(e.target.value)}
+                    placeholder="••••"
+                  />
+                  <Field
+                    label="Nueva contraseña"
+                    type="password"
+                    value={passNueva}
+                    onChange={(e) => setPassNueva(e.target.value)}
+                    placeholder="Mínimo 4 carácteres"
+                  />
+                  <Field
+                    label="Confirmar nueva contraseña"
+                    type="password"
+                    value={passConfirma}
+                    onChange={(e) => setPassConfirma(e.target.value)}
+                    placeholder="••••"
+                  />
+                  {passErr && (
+                    <div
+                      className="anim-shake"
+                      style={{
+                        background: 'rgba(198,40,40,.1)',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        fontSize: 12,
+                        color: '#c62828',
+                      }}
+                    >
+                      {passErr}
+                    </div>
+                  )}
+                  {passMsg && (
+                    <div className="anim-fade-up" style={{ fontSize: 13, fontWeight: 700, color: '#2e7d32' }}>
+                      {passMsg}
+                    </div>
+                  )}
                   <Btn onClick={savePassword}>Actualizar contraseña</Btn>
                 </div>
               </Card>
             </div>
           )}
-
           {panel === 'pedidos' && (
             <Card style={{ padding: 24 }}>
               <h3 style={{ fontWeight: 800, marginBottom: 16, color: '#222222' }}>Mis pedidos</h3>
-              {misCots.length === 0
-                ? <p style={{ color: '#666' }}>No tienes pedidos aún.</p>
-                : (
-                  <>
-                    <select value={selectedId || ''} onChange={e => setSelectedId(Number(e.target.value))}
-                      style={{ width: '100%', padding: '10px 12px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,.70)', marginBottom: 16, boxSizing: 'border-box' }}>
-                      {misCots.map((c, i) => <option key={c.id} value={c.id}>{i + 1}. {c.tipo} — {ETAPA_LABEL[c.estado]}</option>)}
-                    </select>
-                    {cot && (
-                      <>
-                        <div className="timeline" style={{ marginBottom: 14 }}>
-                          {ETAPAS.map(e => <span key={e} className={`stage${e === cot.estado ? ' active' : ''}`}>{ETAPA_LABEL[e]}</span>)}
+              {misCots.length === 0 ? (
+                <p style={{ color: '#666' }}>No tienes pedidos aún.</p>
+              ) : (
+                <>
+                  <select
+                    value={selectedId || ''}
+                    onChange={(e) => setSelectedId(Number(e.target.value))}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid rgba(217,217,217,.7)',
+                      borderRadius: 10,
+                      fontSize: 14,
+                      background: 'rgba(255,255,255,.70)',
+                      marginBottom: 16,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {misCots.map((c, i) => (
+                      <option key={c.id} value={c.id}>
+                        {i + 1}. {c.tipo} — {ETAPA_LABEL[c.estado]}
+                      </option>
+                    ))}
+                  </select>
+                  {cot && (
+                    <>
+                      <div className="timeline" style={{ marginBottom: 14 }}>
+                        {ETAPAS.map((e) => (
+                          <span key={e} className={`stage${e === cot.estado ? ' active' : ''}`}>
+                            {ETAPA_LABEL[e]}
+                          </span>
+                        ))}
+                      </div>
+                      {cot.adjuntoBase64 && (
+                        <div style={{ marginBottom: 12 }}>
+                          <p style={{ fontSize: 11, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>
+                            Imagen de referencia
+                          </p>
+                          <img
+                            src={cot.adjuntoBase64}
+                            alt="Referencia"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: 200,
+                              borderRadius: 8,
+                              objectFit: 'contain',
+                              border: '1px solid rgba(200,180,160,.3)',
+                              background: '#f5f5f5',
+                            }}
+                          />
                         </div>
-                        <div style={{ minHeight: 100, maxHeight: 300, overflowY: 'auto', background: 'rgba(255,255,255,.5)', borderRadius: 10, padding: 12, marginBottom: 10, border: '1px solid rgba(200,180,160,.3)', fontSize: 13, lineHeight: 1.7 }}>
-                          {cot.mensajes.length === 0
-                            ? <p style={{ color: '#666' }}>Sin mensajes.</p>
-                            : cot.mensajes.map((m, i) => <p key={i} style={{ marginBottom: 4 }}><b>{m.autor}:</b> {m.texto}</p>)
-                          }
+                      )}
+                      <div
+                        style={{
+                          minHeight: 100,
+                          maxHeight: 300,
+                          overflowY: 'auto',
+                          background: 'rgba(255,255,255,.5)',
+                          borderRadius: 10,
+                          padding: 12,
+                          marginBottom: 10,
+                          border: '1px solid rgba(200,180,160,.3)',
+                          fontSize: 13,
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {cot.mensajes.length === 0 ? (
+                          <p style={{ color: '#666' }}>Sin mensajes.</p>
+                        ) : (
+                          cot.mensajes.map((m, i) => (
+                            <p key={i} style={{ marginBottom: 4 }}>
+                              <b>{m.autor}:</b> {m.texto}
+                            </p>
+                          ))
+                        )}
+                      </div>
+                      {cot.chatCerrado ? (
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color: '#b00020',
+                            padding: '8px 12px',
+                            background: 'rgba(0,0,0,.04)',
+                            borderRadius: 8,
+                          }}
+                        >
+                          Chat cerrado por el Administrador.
+                        </p>
+                      ) : (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input
+                            value={chatMsg}
+                            onChange={(e) => setChatMsg(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && chatMsg.trim()) {
+                                onSendMsg(cot.id, chatMsg.trim(), 'cliente')
+                                setChatMsg('')
+                              }
+                            }}
+                            placeholder="Escribe un mensaje..."
+                            style={{
+                              flex: 1,
+                              padding: '10px 12px',
+                              border: '1px solid rgba(217,217,217,.7)',
+                              borderRadius: 10,
+                              fontSize: 14,
+                              background: 'rgba(255,255,255,.70)',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                          <Btn
+                            onClick={() => {
+                              if (chatMsg.trim()) {
+                                onSendMsg(cot.id, chatMsg.trim(), 'cliente')
+                                setChatMsg('')
+                              }
+                            }}
+                          >
+                            Enviar
+                          </Btn>
                         </div>
-                        {cot.chatCerrado
-                          ? <p style={{ fontSize: 12, color: '#b00020', padding: '8px 12px', background: 'rgba(0,0,0,.04)', borderRadius: 8 }}>Chat cerrado por el Administrador.</p>
-                          : (
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && chatMsg.trim()) { onSendMsg(cot.id, chatMsg.trim(), 'cliente'); setChatMsg('') } }}
-                                placeholder="Escribe un mensaje..."
-                                style={{ flex: 1, padding: '10px 12px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,.70)', outline: 'none', boxSizing: 'border-box' }} />
-                              <Btn onClick={() => { if (chatMsg.trim()) { onSendMsg(cot.id, chatMsg.trim(), 'cliente'); setChatMsg('') } }}>Enviar</Btn>
-                            </div>
-                          )
-                        }
-                      </>
-                    )}
-                  </>
-                )
-              }
+                      )}
+                    </>
+                  )}
+                </>
+              )}
             </Card>
           )}
         </div>
@@ -1328,66 +2094,124 @@ function PageCliente({ currentUser, cotizaciones, onBack, onSendMsg, initialPane
   )
 }
 
-/* ════════════════════════════════════════════════════════════
-   PAGE ADMIN (versión resumida para no exceder límite)
-   ════════════════════════════════════════════════════════════ */
-function PageAdmin({ cotizaciones, clientes, precios, coloresDB = [], cargarColoresDB, handleGuardarPreciosBD, cargarPreciosDB, onBack, onChangeEstado, onSendMsg, onToggleChat, onDeleteCot, onAceptar, onUpdatePrecio }) {
+function PageAdmin({
+  cotizaciones,
+  precios,
+  coloresDB = [],
+  cargarCotizaciones,
+  cargarColoresDB,
+  cargarPreciosDB,
+  handleGuardarPreciosBD,
+  onBack,
+  onChangeEstado,
+  onSendMsg,
+  onToggleChat,
+  onDeleteCot,
+  onAceptar,
+  onUpdatePrecio,
+}) {
   const [section, setSection] = useState('cotizaciones')
-  const [filter, setFilter]   = useState('todos')
+  const [filter, setFilter] = useState('todos')
   const [chatFilter, setChatFilter] = useState('todos')
   const [selectedId, setSelectedId] = useState(cotizaciones[0]?.id || null)
   const [msgAdmin, setMsgAdmin] = useState('')
   const [emailDraft, setEmailDraft] = useState('')
   const [emailSending, setEmailSending] = useState(false)
-  const [emailStatus, setEmailStatus]   = useState(null)
+  const [emailStatus, setEmailStatus] = useState(null)
   const [confirmSending, setConfirmSending] = useState(false)
-  const [confirmStatus, setConfirmStatus]   = useState(null)
-  const preciosCargadosRef = useRef(false)
+  const [confirmStatus, setConfirmStatus] = useState(null)
+  const [calcCotId, setCalcCotId] = useState('')
+  const [matMel, setMatMel] = useState(0)
+  const [matMelTipo, setMatMelTipo] = useState('')
+  const [matMdf, setMatMdf] = useState(0)
+  const [matMdfTipo, setMatMdfTipo] = useState(MDF_GROSORES[0])
+  const [matTapacanto, setMatTapacanto] = useState(0)
+  const [matTcTipo, setMatTcTipo] = useState('')
+  const [matTornillos, setMatTornillos] = useState(0)
+  const [matManillas, setMatManillas] = useState(0)
+  const [matManillaP, setMatManillaP] = useState(0)
+  const [matRuedas, setMatRuedas] = useState(0)
+  const [matRuedasP, setMatRuedasP] = useState(0)
+  const [matBisagras, setMatBisagras] = useState(0)
+  const [matBisagrasP, setMatBisagrasP] = useState(0)
+  const [matMano, setMatMano] = useState(0)
+  const [extras, setExtras] = useState([])
 
   useEffect(() => {
-    if (section === 'precios' && cargarColoresDB && !preciosCargadosRef.current) {
-      preciosCargadosRef.current = true
+    if (section === 'precios' && cargarColoresDB) {
       cargarColoresDB()
-      cargarPreciosDB()
     }
-  }, [section, cargarColoresDB, cargarPreciosDB])
+    if ((section === 'cotizaciones' || section === 'gestionar' || section === 'chat') && cargarCotizaciones) {
+      cargarCotizaciones()
+    }
+  }, [section, cargarColoresDB, cargarCotizaciones])
 
-  const filtered = cotizaciones.filter(q => {
-    if (filter === 'cotización')  return q.estado === 'cotización'
+  const filtered = cotizaciones.filter((q) => {
+    if (filter === 'cotización') return q.estado === 'cotización'
     if (filter === 'fabricación') return q.estado === 'fabricación'
-    if (filter === 'entregados')  return q.estado === 'entregado'
+    if (filter === 'entregados') return q.estado === 'entregado'
     return true
   })
 
-  const chatFiltered = cotizaciones.filter(q => {
+  const chatFiltered = cotizaciones.filter((q) => {
     if (chatFilter === 'fabricación') return q.estado === 'fabricación'
-    if (chatFilter === 'entregado')   return q.estado === 'entregado'
+    if (chatFilter === 'entregado') return q.estado === 'entregado'
     return q.estado !== 'cotización'
   })
 
-  const cot = cotizaciones.find(c => c.id === selectedId)
+  const cot = cotizaciones.find((c) => c.id === selectedId)
 
   const SideBtn = ({ id, icon, label }) => (
-    <button onClick={() => setSection(id)} style={{ width: '100%', textAlign: 'left', background: section === id ? 'rgba(255,255,255,.15)' : 'none', border: 'none', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, color: section === id ? '#fff' : '#d4b890', fontSize: 13, fontWeight: 700, display: 'flex', gap: 8 }}
-      onMouseEnter={e => e.currentTarget.style.background = section === id ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.08)'}
-      onMouseLeave={e => e.currentTarget.style.background = section === id ? 'rgba(255,255,255,.15)' : 'none'}
-    >{icon} {label}</button>
+    <button
+      onClick={() => setSection(id)}
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        background: section === id ? 'rgba(255,255,255,.15)' : 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '10px 12px',
+        borderRadius: 8,
+        color: section === id ? '#fff' : '#d4b890',
+        fontSize: 13,
+        fontWeight: 700,
+        display: 'flex',
+        gap: 8,
+      }}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.background = section === id ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.08)')
+      }
+      onMouseLeave={(e) =>
+        (e.currentTarget.style.background = section === id ? 'rgba(255,255,255,.15)' : 'none')
+      }
+    >
+      {icon} {label}
+    </button>
   )
 
   function doAvanzar() {
     if (!cot) return
     const i = ETAPAS.indexOf(cot.estado)
-    if (i < ETAPAS.length - 1) { onChangeEstado(cot.id, ETAPAS[i + 1]); onSendMsg(cot.id, 'Estado: ' + ETAPA_LABEL[ETAPAS[i + 1]], 'admin') }
-    else alert('Ya está en el último estado')
+    if (i < ETAPAS.length - 1) {
+      onChangeEstado(cot.id, ETAPAS[i + 1])
+      onSendMsg(cot.id, 'Estado: ' + ETAPA_LABEL[ETAPAS[i + 1]], 'admin')
+    } else alert('Ya está en el último estado')
   }
+
   function doRetroceder() {
     if (!cot) return
     const i = ETAPAS.indexOf(cot.estado)
-    if (i > 0) { onChangeEstado(cot.id, ETAPAS[i - 1]); onSendMsg(cot.id, 'Estado retrocedido a ' + ETAPA_LABEL[ETAPAS[i - 1]], 'admin') }
-    else alert('Ya está en el primer estado')
+    if (i > 0) {
+      onChangeEstado(cot.id, ETAPAS[i - 1])
+      onSendMsg(cot.id, 'Estado retrocedido a ' + ETAPA_LABEL[ETAPAS[i - 1]], 'admin')
+    } else alert('Ya está en el primer estado')
   }
+
   function doEntregado() {
-    if (!cot || cot.estado !== 'entrega') { alert('El pedido debe estar en estado "Entrega"'); return }
+    if (!cot || cot.estado !== 'entrega') {
+      alert('El pedido debe estar en estado "Entrega"')
+      return
+    }
     if (!confirm(`¿Marcar como ENTREGADO a ${cot.nombre}?`)) return
     onChangeEstado(cot.id, 'entregado')
     onSendMsg(cot.id, 'Pedido entregado. ¡Gracias por confiar en Hernández Muebles!', 'sistema')
@@ -1397,7 +2221,9 @@ function PageAdmin({ cotizaciones, clientes, precios, coloresDB = [], cargarColo
   function generarCorreo() {
     if (!cot) return
     const partes = (cot.nombre || '').trim().split(/\s+/)
-    setEmailDraft(`Buenos ${getSaludo()}, señor/señora ${partes[0]}.\n\nLe escribimos respecto a su cotización código ${cot.código}.\n\n──────────────────────\nDATOS DE COTIZACIÓN\n──────────────────────\nCódigo: ${cot.código}\nFecha: ${cot.fecha}\nCliente: ${cot.nombre}\nCorreo: ${cot.email}\nTeléfono: ${cot.número}\n\nTipo: ${cot.tipo}\nMedidas: ${cot.dim.ancho} × ${cot.dim.alto} × ${cot.dim.prof} cm\nMaterial: ${cot.material}\n──────────────────────\n\n¿Desea confirmar el pedido?\nContáctenos con el código: ${cot.código}\n\nAtentamente,\nHernández Muebles\njoserhernandezmuebles@gmail.com`)
+    setEmailDraft(
+      `Buenos ${getSaludo()}, señor/señora ${partes[0]}.\n\nLe escribimos respecto a su cotización código ${cot.código}.\n\n──────────────────────\nDATOS DE COTIZACIÓN\n──────────────────────\nCódigo: ${cot.código}\nFecha: ${cot.fecha}\nCliente: ${cot.nombre}\nCorreo: ${cot.email}\nTeléfono: ${cot.número}\n\nTipo: ${cot.tipo}\nMedidas: ${cot.dim.ancho} × ${cot.dim.alto} × ${cot.dim.prof} cm\nMaterial: ${cot.material}\n──────────────────────\n\n¿Desea confirmar el pedido?\nContáctenos con el código: ${cot.código}\n\nAtentamente,\nHernández Muebles\njoserhernandezmuebles@gmail.com`
+    )
     setEmailStatus(null)
   }
 
@@ -1410,13 +2236,13 @@ function PageAdmin({ cotizaciones, clientes, precios, coloresDB = [], cargarColo
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_COTIZACION,
         {
-          to_name:    cot.nombre,
-          to_email:   cot.email,
-          from_name:  'Hernández Muebles',
-          reply_to:   ADMIN_EMAIL,
-          subject:    `Cotización ${cot.código} — Hernández Muebles`,
-          message:    emailDraft,
-          codigo:     cot.código,
+          to_name: cot.nombre,
+          to_email: cot.email,
+          from_name: 'Hernández Muebles',
+          reply_to: ADMIN_EMAIL,
+          subject: `Cotización ${cot.código} — Hernández Muebles`,
+          message: emailDraft,
+          codigo: cot.código,
         },
         EMAILJS_PUBLIC_KEY
       )
@@ -1429,98 +2255,362 @@ function PageAdmin({ cotizaciones, clientes, precios, coloresDB = [], cargarColo
     }
   }
 
-  const [calcCotId, setCalcCotId]     = useState('')
-  const [matMel, setMatMel]           = useState(0)
-  const [matMelTipo, setMatMelTipo]   = useState('')
-  const [matMdf, setMatMdf]           = useState(0)
-  const [matMdfTipo, setMatMdfTipo]   = useState(MDF_GROSORES[0])
-  const [matTapacanto, setMatTapacanto] = useState(0)
-  const [matTcTipo, setMatTcTipo]     = useState('')
-  const [matTornillos, setMatTornillos] = useState(0)
-  const [matManillas, setMatManillas] = useState(0)
-  const [matManillaP, setMatManillaP] = useState(0)
-  const [matRuedas, setMatRuedas]     = useState(0)
-  const [matRuedasP, setMatRuedasP]   = useState(0)
-  const [matBisagras, setMatBisagras] = useState(0)
-  const [matBisagrasP, setMatBisagrasP] = useState(0)
-  const [matMano, setMatMano]         = useState(0)
-  const [extras, setExtras]           = useState([])
+  function generarCorreoPresupuesto() {
+    const q = cotizaciones.find(c => String(c.id) === calcCotId)
+    if (!q) {
+      alert('Primero selecciona una cotización')
+      return
+    }
+
+    const melP = matMelTipo ? (precios.melamina?.[matMelTipo] || 0) : 0
+    const mdfP = matMdfTipo?.includes('18') ? precios.mdf18 : precios.mdf9
+    const tcP = matTcTipo ? (precios.tapacanto?.[matTcTipo] || 0) : 0
+    
+    const filas = [
+      { label: `Melamina${matMelTipo ? ' — ' + matMelTipo : ''}`, q: matMel, p: melP, show: Number(matMel) > 0 },
+      { label: `MDF ${matMdfTipo?.includes('18') ? '18mm' : '9mm'}`, q: matMdf, p: mdfP, show: Number(matMdf) > 0 },
+      { label: `Tapacanto${matTcTipo ? ' — ' + matTcTipo : ''}`, q: matTapacanto, p: tcP, show: Number(matTapacanto) > 0 },
+      { label: 'Tornillos (cajas)', q: matTornillos, p: precios.tornillos || 0, show: Number(matTornillos) > 0 },
+      { label: 'Manillas', q: matManillas, p: matManillaP || precios.manillas || 0, show: Number(matManillas) > 0 },
+      { label: 'Ruedas', q: matRuedas, p: matRuedasP || precios.ruedas || 0, show: Number(matRuedas) > 0 },
+      { label: 'Bisagras', q: matBisagras, p: matBisagrasP || precios.bisagras || 0, show: Number(matBisagras) > 0 },
+      ...extras.filter(e => Number(e.q) > 0).map(e => ({ label: e.desc || 'Ítem extra', q: e.q, p: e.p, show: true })),
+    ].filter(f => f.show)
+    
+    const subtotal = filas.reduce((acc, f) => acc + (Number(f.q) || 0) * (Number(f.p) || 0), 0)
+    const mano = Number(matMano) || 0
+    const total = subtotal + mano
+
+    let presupuestoTexto = ''
+    if (filas.length > 0 || mano > 0) {
+      presupuestoTexto = [
+        ``,
+        `──────────────────────`,
+        `PRESUPUESTO DE MATERIALES`,
+        `──────────────────────`,
+        ...filas.map(f => `• ${f.label}: ${f.q} × $${(Number(f.p)||0).toLocaleString('es-CL')} = $${((Number(f.q)||0)*(Number(f.p)||0)).toLocaleString('es-CL')}`),
+        ...(mano > 0 ? [`• Mano de obra: $${mano.toLocaleString('es-CL')}`] : []),
+        `──────────────────────`,
+        `TOTAL: $${total.toLocaleString('es-CL')}`,
+        `──────────────────────`,
+      ].join('\n')
+    }
+
+    const partes = (q.nombre || '').trim().split(/\s+/)
+    const saludo = getSaludo()
+
+    return `Buenos ${saludo}, señor/señora ${partes[0] || 'cliente'}.\n\nLe escribimos respecto a su cotización código ${q.código}.\n\n──────────────────────\nDATOS DE COTIZACIÓN\n──────────────────────\nCódigo: ${q.código}\nFecha: ${q.fecha}\nCliente: ${q.nombre}\nCorreo: ${q.email}\nTeléfono: ${q.número}\n\nTipo: ${q.tipo}\nMedidas: ${q.dim.ancho} × ${q.dim.alto} × ${q.dim.prof} cm\nMaterial: ${q.material}\n${q.descripción ? `Descripción: ${q.descripción}` : ''}\n──────────────────────${presupuestoTexto}\n\n¿Desea confirmar el pedido?\nContáctenos con el código: ${q.código}\n\nAtentamente,\nHernández Muebles\njoserhernandezmuebles@gmail.com`
+  }
+
+  async function enviarCorreoPresupuesto() {
+  const q = cotizaciones.find(c => String(c.id) === calcCotId)
+  if (!q) {
+    alert('Primero selecciona una cotización')
+    return
+  }
+
+  const emailDraft = generarCorreoPresupuesto()
+  if (!emailDraft || !emailDraft.trim()) return
+
+  setEmailSending(true)
+  setEmailStatus(null)
+
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_CONFIRMACION,  
+      {
+        to_name: q.nombre,
+        to_email: q.email,
+        from_name: 'Hernández Muebles',
+        reply_to: ADMIN_EMAIL,
+        subject: `Presupuesto ${q.código} — Hernández Muebles`,
+        message: emailDraft,
+        codigo: q.código,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+    setEmailStatus('ok')
+    alert(`✅ Presupuesto enviado a ${q.email}`)
+  } catch (err) {
+    console.error('EmailJS error:', err)
+    setEmailStatus('error')
+    alert('❌ Error al enviar el correo. Revisa tus credenciales de EmailJS.')
+  } finally {
+    setEmailSending(false)
+  }
+}
 
   function calcTotal() {
-    const melP  = matMelTipo ? (precios.melamina[matMelTipo] || 0) : 0
-    const mdfP  = matMdfTipo?.includes('18') ? precios.mdf18 : precios.mdf9
-    const tcP   = matTcTipo ? (precios.tapacanto[matTcTipo] || 0) : 0
+    const melP = matMelTipo ? precios.melamina?.[matMelTipo] || 0 : 0
+    const mdfP = matMdfTipo?.includes('18') ? precios.mdf18 : precios.mdf9
+    const tcP = matTcTipo ? precios.tapacanto?.[matTcTipo] || 0 : 0
     const items = [
-      { q: matMel, p: melP }, { q: matMdf, p: mdfP }, { q: matTapacanto, p: tcP },
-      { q: matTornillos, p: precios.tornillos },
-      { q: matManillas, p: matManillaP || precios.manillas },
-      { q: matRuedas, p: matRuedasP || precios.ruedas },
-      { q: matBisagras, p: matBisagrasP || precios.bisagras },
-      ...extras.map(e => ({ q: e.q, p: e.p })),
+      { q: matMel, p: melP },
+      { q: matMdf, p: mdfP },
+      { q: matTapacanto, p: tcP },
+      { q: matTornillos, p: precios.tornillos || 0 },
+      { q: matManillas, p: matManillaP || precios.manillas || 0 },
+      { q: matRuedas, p: matRuedasP || precios.ruedas || 0 },
+      { q: matBisagras, p: matBisagrasP || precios.bisagras || 0 },
+      ...extras.map((e) => ({ q: e.q, p: e.p })),
     ]
     return items.reduce((acc, it) => acc + (Number(it.q) || 0) * (Number(it.p) || 0), 0) + (Number(matMano) || 0)
   }
 
-  // Renderizado simplificado para el admin
   return (
     <Card>
-      <nav style={{ height: 64, padding: '0 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(205,205,205,.5)', background: 'rgba(255,255,255,.45)', backdropFilter: 'blur(8px)' }}>
+      <nav
+        style={{
+          height: 64,
+          padding: '0 22px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: '1px solid rgba(205,205,205,.5)',
+          background: 'rgba(255,255,255,.45)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 28, marginRight: 8 }}>←</button>
+          <button
+            onClick={onBack}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 28, marginRight: 8 }}
+          >
+            ←
+          </button>
           <span style={{ fontSize: 22, fontWeight: 800 }}>Panel administrativo</span>
         </div>
-        <span style={{ fontSize: 12, background: '#1a1a1a', color: '#fff', padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>⚙️ Admin</span>
+        <span
+          style={{
+            fontSize: 12,
+            background: '#1a1a1a',
+            color: '#fff',
+            padding: '4px 10px',
+            borderRadius: 6,
+            fontWeight: 700,
+          }}
+        >
+          ⚙️ Admin
+        </span>
       </nav>
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 14, padding: 18 }}>
-        <div style={{ background: 'rgba(15,15,15,.75)', color: '#e8e8e8', borderRadius: 14, padding: 16, backdropFilter: 'blur(10px)' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,.1)', marginBottom: 12 }}>🛠 Panel Admin</div>
-          <button onClick={onBack} style={{ width: '100%', marginBottom: 12, justifyContent: 'center', background: 'rgba(255,255,255,.25)', color: '#f0f0f0', border: '1.5px solid rgba(255,255,255,.45)', padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>🏠 Volver al inicio</button>
+        <div
+          style={{
+            background: 'rgba(15,15,15,.75)',
+            color: '#e8e8e8',
+            borderRadius: 14,
+            padding: 16,
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              paddingBottom: 8,
+              borderBottom: '1px solid rgba(255,255,255,.1)',
+              marginBottom: 12,
+            }}
+          >
+            Panel Admin
+          </div>
+          <button
+            onClick={onBack}
+            style={{
+              width: '100%',
+              marginBottom: 12,
+              justifyContent: 'center',
+              background: 'rgba(255,255,255,.25)',
+              color: '#f0f0f0',
+              border: '1.5px solid rgba(255,255,255,.45)',
+              padding: '8px 14px',
+              borderRadius: 10,
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            Volver al inicio
+          </button>
           <div style={{ height: 1, background: 'rgba(255,255,255,.15)', marginBottom: 12 }} />
-          <p style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(240,219,195,.5)', marginBottom: 8, fontWeight: 700 }}>Cotizaciónes</p>
+          <p
+            style={{
+              fontSize: 11,
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              color: 'rgba(240,219,195,.5)',
+              marginBottom: 8,
+              fontWeight: 700,
+            }}
+          >
+            Cotizaciónes
+          </p>
           <SideBtn id="cotizaciones" icon="📋" label="Lista de cotizaciones" />
-          <SideBtn id="gestionar"    icon="🔧" label="Administrar cotización" />
-          <SideBtn id="precios"      icon="💰" label="Precios de materiales" />
-          <SideBtn id="calculadora"  icon="🧮" label="Calculadora presupuesto" />
-          <SideBtn id="chat"         icon="💬" label="Chat con clientes" />
-          <div style={{ height: 1, background: 'rgba(255,255,255,.15)', margin: '8px 0' }} />
-          <SideBtn id="clientes"     icon="👥" label="Clientes" />
+          <SideBtn id="gestionar" icon="🔧" label="Administrar cotización" />
+          <SideBtn id="precios" icon="💰" label="Precios de materiales" />
+          <SideBtn id="calculadora" icon="🧮" label="Calculadora presupuesto" />
+          <SideBtn id="chat" icon="💬" label="Chat con clientes" />
         </div>
-
         <div>
           {section === 'cotizaciones' && (
             <Card style={{ padding: 16 }}>
-              <h4 style={{ fontWeight: 700, marginBottom: 12 }}>📋 Lista de cotizaciones</h4>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                }}
+              >
+                <h4 style={{ fontWeight: 700, margin: 0 }}>Lista de cotizaciones</h4>
+                <button
+                  onClick={() => {
+                    if (cargarCotizaciones) cargarCotizaciones()
+                  }}
+                  style={{
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 12,
+                  }}
+                >
+                  Recargar
+                </button>
+              </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-                {[['todos','Todos'],['cotización','Cotización'],['fabricación','Fabricación'],['entregados','Entregados']].map(([v, l]) => (
-                  <button key={v} onClick={() => setFilter(v)} className={filter === v ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}>{l}</button>
+                {[
+                  ['todos', 'Todos'],
+                  ['cotización', 'Cotización'],
+                  ['fabricación', 'Fabricación'],
+                  ['entregados', 'Entregados'],
+                ].map(([v, l]) => (
+                  <button
+                    key={v}
+                    onClick={() => setFilter(v)}
+                    className={filter === v ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}
+                  >
+                    {l}
+                  </button>
                 ))}
               </div>
-              {filtered.length === 0 ? <p className="muted">No hay cotizaciones.</p> : (
+              {filtered.length === 0 ? (
+                <p className="muted">No hay cotizaciones.</p>
+              ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {filtered.map(q => {
+                  {filtered.map((q) => {
                     const ec = ETAPA_COLOR[q.estado] || '#555'
                     const lbl = ETAPA_LABEL[q.estado] || q.estado
                     const yaEnt = q.estado === 'entregado'
                     return (
-                      <Card key={q.id} style={{ padding: 14, background: 'rgba(255,255,255,.65)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                      <Card
+                        key={q.id}
+                        style={{
+                          padding: 14,
+                          background: 'rgba(255,255,255,.65)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: 10,
+                        }}
+                      >
                         <div>
-                          <div style={{ fontSize: 12, color: '#1a1a1a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{q.código}</div>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: '#1a1a1a',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: 1,
+                            }}
+                          >
+                            {q.código}
+                          </div>
                           <div style={{ fontSize: 15, fontWeight: 700 }}>{q.nombre}</div>
-                          <div style={{ fontSize: 12, color: '#666' }}>{q.email} · {q.tipo}</div>
-                          <span style={{ background: ec, color: '#fff', fontSize: 11, padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>{lbl}</span>
+                          <div style={{ fontSize: 12, color: '#666' }}>
+                            {q.email} · {q.tipo}
+                          </div>
+                          <span
+                            style={{
+                              background: ec,
+                              color: '#fff',
+                              fontSize: 11,
+                              padding: '2px 8px',
+                              borderRadius: 99,
+                              fontWeight: 700,
+                            }}
+                          >
+                            {lbl}
+                          </span>
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           {q.estado === 'cotización' && (
-                            <button className="btn-primary btn-sm" onClick={() => { if (!confirm(`¿Aceptar cotización de ${q.nombre}?`)) return; onAceptar(q.id) }}>✅ Aceptar</button>
+                            <button
+                              className="btn-primary btn-sm"
+                              onClick={() => {
+                                if (!confirm(`¿Aceptar cotización de ${q.nombre}?`)) return
+                                onAceptar(q.id)
+                              }}
+                            >
+                              Aceptar
+                            </button>
                           )}
                           {q.estado === 'fabricación' && (
-                            <button className="btn-primary btn-sm" style={{ background: '#7a4f9a' }} onClick={() => { if (!confirm(`¿Marcar como "En entrega" a ${q.nombre}?`)) return; onChangeEstado(q.id, 'entrega'); onSendMsg(q.id, 'Pedido listo. Pasando a entrega.', 'admin') }}>🚚 Avanzar a entrega</button>
+                            <button
+                              className="btn-primary btn-sm"
+                              style={{ background: '#7a4f9a' }}
+                              onClick={() => {
+                                if (!confirm(`¿Marcar como "En entrega" a ${q.nombre}?`)) return
+                                onChangeEstado(q.id, 'entrega')
+                                onSendMsg(q.id, 'Pedido listo. Pasando a entrega.', 'admin')
+                              }}
+                            >
+                              Avanzar a entrega
+                            </button>
                           )}
                           {q.estado === 'entrega' && (
-                            <button className="btn-primary btn-sm" style={{ background: '#2e7d32' }} onClick={() => { if (!confirm(`¿Marcar como entregado a ${q.nombre}?`)) return; onChangeEstado(q.id, 'entregado'); onSendMsg(q.id, '¡Pedido entregado! Gracias por confiar en Hernández Muebles.', 'sistema'); onToggleChat(q.id, true) }}>📦 Marcar entregado</button>
+                            <button
+                              className="btn-primary btn-sm"
+                              style={{ background: '#2e7d32' }}
+                              onClick={() => {
+                                if (!confirm(`¿Marcar como entregado a ${q.nombre}?`)) return
+                                onChangeEstado(q.id, 'entregado')
+                                onSendMsg(
+                                  q.id,
+                                  '¡Pedido entregado! Gracias por confiar en Hernández Muebles.',
+                                  'sistema'
+                                )
+                                onToggleChat(q.id, true)
+                              }}
+                            >
+                              Marcar entregado
+                            </button>
                           )}
-                          <button className="btn-outline btn-sm" onClick={() => { setSection('gestionar'); setSelectedId(q.id) }}>🔧 Administrar</button>
-                          {!yaEnt && <button className="btn-outline btn-sm" style={{ color: '#b00020', borderColor: '#b00020' }} onClick={() => onDeleteCot(q.id)}>🗑 Eliminar</button>}
+                          <button
+                            className="btn-outline btn-sm"
+                            onClick={() => {
+                              setSection('gestionar')
+                              setSelectedId(q.id)
+                            }}
+                          >
+                            Administrar
+                          </button>
+                          {!yaEnt && (
+                            <button
+                              className="btn-outline btn-sm"
+                              style={{ color: '#b00020', borderColor: '#b00020' }}
+                              onClick={() => onDeleteCot(q.id)}
+                            >
+                              Eliminar
+                            </button>
+                          )}
                         </div>
                       </Card>
                     )
@@ -1529,297 +2619,1311 @@ function PageAdmin({ cotizaciones, clientes, precios, coloresDB = [], cargarColo
               )}
             </Card>
           )}
-
-          {/* El resto de secciones del admin (gestionar, precios, calculadora, chat, clientes) 
-              mantienen su lógica igual que en el código original */}
           {section === 'gestionar' && (
             <Card style={{ padding: 16 }}>
-              <h4 style={{ fontWeight: 700, marginBottom: 12 }}>🔧 Administrar cotización</h4>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#444', display: 'block', marginBottom: 4 }}>Selecciónar cotización</label>
-              <select value={selectedId || ''} onChange={e => setSelectedId(Number(e.target.value))}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,.70)', marginBottom: 12, boxSizing: 'border-box' }}>
-                {cotizaciones.map((c, i) => <option key={c.id} value={c.id}>{i + 1}. [{c.código}] {c.nombre} ({ETAPA_LABEL[c.estado]})</option>)}
+              <h4 style={{ fontWeight: 700, marginBottom: 12 }}>Administrar cotización</h4>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#444', display: 'block', marginBottom: 4 }}>
+                Selecciónar cotización
+              </label>
+              <select
+                value={selectedId || ''}
+                onChange={(e) => setSelectedId(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid rgba(217,217,217,.7)',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  background: 'rgba(255,255,255,.70)',
+                  marginBottom: 12,
+                  boxSizing: 'border-box',
+                }}
+              >
+                {cotizaciones.map((c, i) => (
+                  <option key={c.id} value={c.id}>
+                    {i + 1}. [{c.código}] {c.nombre} ({ETAPA_LABEL[c.estado]})
+                  </option>
+                ))}
               </select>
               {cot ? (
                 <>
                   <Card style={{ padding: 14, marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 8,
+                        marginBottom: 10,
+                      }}
+                    >
                       <div>
-                        <span style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: '#1a1a1a', fontWeight: 700 }}>Código</span><br />
+                        <span
+                          style={{
+                            fontSize: 11,
+                            letterSpacing: 1,
+                            textTransform: 'uppercase',
+                            color: '#1a1a1a',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Código
+                        </span>
+                        <br />
                         <span style={{ fontSize: 18, fontWeight: 800, color: '#222222' }}>{cot.código}</span>
                       </div>
                       <div style={{ fontSize: 12, color: '#777' }}>{cot.fecha}</div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 18px', fontSize: 13, marginBottom: 10 }}>
-                      {[['Nombre', cot.nombre], ['Correo', cot.email], ['Teléfono', cot.número], ['Tipo', cot.tipo], ['Medidas', `${cot.dim.ancho} × ${cot.dim.alto} × ${cot.dim.prof} cm`], ['Material', cot.material]].map(([k, v]) => (
-                        <div key={k}><span style={{ color: '#777', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{k}</span><div style={{ fontWeight: 700 }}>{v}</div></div>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '8px 18px',
+                        fontSize: 13,
+                        marginBottom: 10,
+                      }}
+                    >
+                      {[
+                        ['Nombre', cot.nombre],
+                        ['Correo', cot.email],
+                        ['Teléfono', cot.número],
+                        ['Tipo', cot.tipo],
+                        ['Medidas', `${cot.dim.ancho} × ${cot.dim.alto} × ${cot.dim.prof} cm`],
+                        ['Material', cot.material],
+                      ].map(([k, v]) => (
+                        <div key={k}>
+                          <span
+                            style={{
+                              color: '#777',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {k}
+                          </span>
+                          <div style={{ fontWeight: 700 }}>{v}</div>
+                        </div>
                       ))}
                     </div>
                     <div className="timeline">
-                      {ETAPAS.map(e => <span key={e} className={`stage${e === cot.estado ? ' active' : ''}`}>{ETAPA_LABEL[e]}</span>)}
+                      {ETAPAS.map((e) => (
+                        <span key={e} className={`stage${e === cot.estado ? ' active' : ''}`}>
+                          {ETAPA_LABEL[e]}
+                        </span>
+                      ))}
                     </div>
                     {cot.adjuntoBase64 && (
                       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(200,180,160,.3)' }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>📷 Imagen de referencia del cliente</p>
-                        <img src={cot.adjuntoBase64} alt="Referencia" style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 10, border: '2px solid rgba(26,26,26,.4)', objectFit: 'contain', display: 'block' }} />
+                        <p
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: '#1a1a1a',
+                            textTransform: 'uppercase',
+                            letterSpacing: 1,
+                            marginBottom: 8,
+                          }}
+                        >
+                          Imagen de referencia del cliente
+                        </p>
+                        <img
+                          src={cot.adjuntoBase64}
+                          alt="Referencia"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: 280,
+                            borderRadius: 10,
+                            border: '2px solid rgba(26,26,26,.4)',
+                            objectFit: 'contain',
+                            display: 'block',
+                          }}
+                        />
                       </div>
                     )}
                   </Card>
                   <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <Btn outline small onClick={doRetroceder}>◀ Retroceder</Btn>
-                    <Btn outline small onClick={doAvanzar}>▶ Avanzar</Btn>
-                    {cot.estado === 'entrega' && <Btn small onClick={doEntregado} style={{ background: '#333333' }}>📦 Marcar como entregado</Btn>}
-                    <Btn outline small onClick={async () => {
-                      const q = cot
-                      try {
-                        const res = await fetch('/api/pdf/cotizacion', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(q),
-                        })
-                        if (!res.ok) throw new Error('Error al generar PDF')
-                        const blob = await res.blob()
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement('a'); a.href = url; a.download = `COTIZACION_${q.código}.pdf`; a.click(); URL.revokeObjectURL(url)
-                      } catch (e) { alert('No se pudo generar el PDF: ' + e.message) }
-                    }}>⬇ Descargar PDF</Btn>
+                    <Btn outline small onClick={doRetroceder}>
+                      Retroceder
+                    </Btn>
+                    <Btn outline small onClick={doAvanzar}>
+                      Avanzar
+                    </Btn>
+                    {cot.estado === 'entrega' && (
+                      <Btn small onClick={doEntregado} style={{ background: '#333333' }}>
+                        Marcar como entregado
+                      </Btn>
+                    )}
+                    <Btn
+                      outline
+                      small
+                      onClick={async () => {
+                        const q = cot
+                        try {
+                          const res = await fetch('/api/pdf/cotizacion', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(q),
+                          })
+                          if (!res.ok) throw new Error('Error al generar PDF')
+                          const blob = await res.blob()
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = `COTIZACION_${q.código}.pdf`
+                          a.click()
+                          URL.revokeObjectURL(url)
+                        } catch (e) {
+                          alert('No se pudo generar el PDF: ' + e.message)
+                        }
+                      }}
+                    >
+                      Descargar PDF
+                    </Btn>
                   </div>
                   <div style={{ marginTop: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 6,
+                      }}
+                    >
                       <label style={{ fontSize: 13, fontWeight: 700 }}>Borrador de correo al cliente</label>
-                      <Btn small onClick={generarCorreo}>✉ Generar correo</Btn>
+                      <Btn small onClick={generarCorreo}>
+                        Generar correo
+                      </Btn>
                     </div>
-                    <textarea value={emailDraft} onChange={e => { setEmailDraft(e.target.value); setEmailStatus(null) }} rows={10} placeholder="Seleccióna una cotización y presiona 'Generar correo'..."
-                      style={{ width: '100%', padding: '10px 12px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 10, fontSize: 13, lineHeight: 1.6, fontFamily: 'monospace', background: 'rgba(255,255,255,.70)', resize: 'vertical', boxSizing: 'border-box' }} />
+                    <textarea
+                      value={emailDraft}
+                      onChange={(e) => {
+                        setEmailDraft(e.target.value)
+                        setEmailStatus(null)
+                      }}
+                      rows={10}
+                      placeholder="Seleccióna una cotización y presiona 'Generar correo'..."
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 10,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        fontFamily: 'monospace',
+                        background: 'rgba(255,255,255,.70)',
+                        resize: 'vertical',
+                        boxSizing: 'border-box',
+                      }}
+                    />
                     <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                      <Btn onClick={sendEmail} disabled={!emailDraft.trim() || emailSending} style={{ background: '#333333', display: 'flex', alignItems: 'center', gap: 6 }}>{emailSending ? '⏳ Enviando...' : '📤 Enviar correo al cliente'}</Btn>
-                      {cot && <span style={{ fontSize: 12, color: '#888' }}>Destinatario: <b style={{ color: '#333' }}>{cot.email}</b></span>}
-                      {emailStatus === 'ok' && <span style={{ fontSize: 13, fontWeight: 700, color: '#2e7d32', background: 'rgba(46,125,50,.1)', padding: '6px 12px', borderRadius: 8 }}>✅ Correo enviado</span>}
-                      {emailStatus === 'error' && <span style={{ fontSize: 13, fontWeight: 700, color: '#c62828', background: 'rgba(198,40,40,.1)', padding: '6px 12px', borderRadius: 8 }}>❌ Error al enviar</span>}
+                      <Btn
+                        onClick={sendEmail}
+                        disabled={!emailDraft.trim() || emailSending}
+                        style={{ background: '#333333', display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        {emailSending ? 'Enviando...' : 'Enviar correo al cliente'}
+                      </Btn>
+                      {cot && (
+                        <span style={{ fontSize: 12, color: '#888' }}>
+                          Destinatario: <b style={{ color: '#333' }}>{cot.email}</b>
+                        </span>
+                      )}
+                      {emailStatus === 'ok' && (
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: '#2e7d32',
+                            background: 'rgba(46,125,50,.1)',
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                          }}
+                        >
+                          Correo enviado
+                        </span>
+                      )}
+                      {emailStatus === 'error' && (
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: '#c62828',
+                            background: 'rgba(198,40,40,.1)',
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                          }}
+                        >
+                          Error al enviar
+                        </span>
+                      )}
                     </div>
                   </div>
                 </>
-              ) : <p className="muted">No hay cotizaciones</p>}
+              ) : (
+                <p className="muted">No hay cotizaciones</p>
+              )}
             </Card>
           )}
-
-          {/* Las secciones de precios, calculadora, chat y clientes mantienen su lógica del código original */}
           {section === 'precios' && (
-  <Card style={{ padding: 16 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-      <h4 style={{ fontWeight: 700, margin: 0 }}>💰 Precios de materiales</h4>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button 
-  onClick={() => {
-    console.log('🔄 Recargando forzado...')
-    cargarColoresDB(true)  // 👈 true = forzar recarga
-    cargarPreciosDB()
-  }}
-  style={{ 
-    background: '#1a1a1a', 
-    color: '#fff', 
-    border: 'none', 
-    padding: '6px 12px', 
-    borderRadius: 8, 
-    cursor: 'pointer',
-    fontSize: 12
-  }}
->
-  ↻ Recargar
-</button>
-      </div>
-    </div>
-    
-    {/* Mostrar cantidad de colores cargados */}
-    <p style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>
-      {coloresDB.length > 0 
-        ? `✅ ${coloresDB.length} colores cargados desde la base de datos` 
-        : '⏳ Cargando colores...'}
-    </p>
-    
-    {/* Melamina */}
-    {coloresDB && coloresDB.length > 0 ? (
-  coloresDB.map(color => (
-    <div key={color.id || color.nombre}>
-      <label style={{ fontSize: 11, color: '#666', fontWeight: 700, display: 'block', marginBottom: 2 }}>
-        {color.nombre}
-        <span style={{ fontWeight: 400, fontSize: 10, color: '#999', marginLeft: 6 }}>
-          (ID: {color.id})
-        </span>
-      </label>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <div style={{ 
-          width: 24, height: 24, borderRadius: 4, flexShrink: 0,
-          background: color.hex || '#ccc',
-          border: '1px solid rgba(0,0,0,.1)'
-        }} />
-        <input 
-          type="number" 
-          value={precios.melamina?.[color.nombre] ?? 0}
-          onChange={(e) => {
-            const nuevoValor = Number(e.target.value) || 0
-            console.log(`✏️ Cambiando ${color.nombre}: ${nuevoValor}`)
-            onUpdatePrecio('melamina', color.nombre, nuevoValor)
-          }}
-          style={{ 
-            flex: 1, 
-            padding: '6px 10px', 
-            border: '1px solid rgba(217,217,217,.7)', 
-            borderRadius: 8, 
-            fontSize: 13, 
-            background: 'rgba(255,255,255,.70)',
-            boxSizing: 'border-box' 
-          }} 
-        />
-      </div>
-    </div>
-  ))
-) : (
-  <p style={{ color: '#888', fontSize: 13, gridColumn: '1 / -1', textAlign: 'center' }}>
-    ⏳ Cargando colores desde la base de datos...
-  </p>
-)}
-
-    {/* MDF */}
-    <p style={{ fontWeight: 700, fontSize: 13, color: '#222222', marginBottom: 10 }}>⬜ MDF melamínico</p>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-      {[['mdf9', 'MDF 9mm (Blanco)'], ['mdf18', 'MDF 18mm (Blanco)']].map(([k, l]) => (
-        <div key={k}>
-          <label style={{ fontSize: 11, color: '#666', fontWeight: 700, display: 'block', marginBottom: 2 }}>{l} ($)</label>
-          <input 
-            type="number" 
-            value={precios[k] || 0}
-            onChange={(e) => onUpdatePrecio(k, null, Number(e.target.value))}
-            style={{ width: '100%', padding: '8px 10px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,.70)', boxSizing: 'border-box' }} 
-          />
-        </div>
-      ))}
-    </div>
-
-    {/* Quincallería */}
-    <p style={{ fontWeight: 700, fontSize: 13, color: '#222222', marginBottom: 10 }}>🔩 Quincallería (precio unitario)</p>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-      {[['tornillos','Tornillos — caja'],['manillas','Manillas'],['ruedas','Ruedas'],['bisagras','Bisagras']].map(([k, l]) => (
-        <div key={k}>
-          <label style={{ fontSize: 11, color: '#666', fontWeight: 700, display: 'block', marginBottom: 2 }}>{l} ($)</label>
-          <input 
-            type="number" 
-            value={precios[k] || 0}
-            onChange={(e) => onUpdatePrecio(k, null, Number(e.target.value))}
-            style={{ width: '100%', padding: '8px 10px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,.70)', boxSizing: 'border-box' }} 
-          />
-        </div>
-      ))}
-    </div>
-
-    <button 
-      onClick={handleGuardarPreciosBD} 
-      className="btn-primary" 
-      style={{ width: '100%', marginTop: 16, background: '#2d5a3d', padding: '12px 16px', fontSize: 14, fontWeight: 700 }}
-    >
-      💾 Guardar precios en la BD
-    </button>
-  </Card>
-)}
-
-          {/* Las secciones restantes (calculadora, chat, clientes) se mantienen igual */}
+            <Card style={{ padding: 16 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 14,
+                }}
+              >
+                <h4 style={{ fontWeight: 700, margin: 0 }}>Precios de materiales</h4>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      cargarColoresDB(true)
+                      cargarPreciosDB()
+                    }}
+                    style={{
+                      background: '#1a1a1a',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: 12,
+                    }}
+                  >
+                    Recargar
+                  </button>
+                </div>
+              </div>
+              <p style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>
+                {coloresDB && coloresDB.length > 0
+                  ? `${coloresDB.length} colores cargados desde la base de datos`
+                  : 'Cargando colores...'}
+              </p>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: '#1a1a1a', color: '#fff' }}>
+                      <th style={{ padding: '8px 10px', textAlign: 'left' }}>Color</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'center' }}>Melamina ($)</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'center' }}>Tapacanto ($)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coloresDB && coloresDB.length > 0 ? (
+                      coloresDB.map((color, index) => {
+                        const precioMelamina = precios.melamina?.[color.nombre] ?? color.melamina ?? 0
+                        const precioTapacanto = precios.tapacanto?.[color.nombre] ?? color.tapacanto ?? 0
+                        return (
+                          <tr
+                            key={color.id || color.nombre}
+                            style={{
+                              background: index % 2 === 0 ? 'rgba(255,255,255,.6)' : 'rgba(255,255,255,.3)',
+                              borderBottom: '1px solid rgba(200,180,160,.2)',
+                            }}
+                          >
+                            <td style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div
+                                style={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: 4,
+                                  background: color.hex || '#ccc',
+                                  border: '1px solid rgba(0,0,0,.1)',
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span style={{ fontWeight: 600 }}>{color.nombre}</span>
+                              <span style={{ fontSize: 10, color: '#888', fontWeight: 400 }}>
+                                ({color.categoria || 'unico'})
+                              </span>
+                            </td>
+                            <td style={{ padding: '4px 10px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={precioMelamina}
+                                onChange={(e) =>
+                                  onUpdatePrecio('melamina', color.nombre, Number(e.target.value))
+                                }
+                                style={{
+                                  width: '100%',
+                                  maxWidth: 120,
+                                  padding: '6px 8px',
+                                  border: '1px solid rgba(217,217,217,.7)',
+                                  borderRadius: 6,
+                                  fontSize: 13,
+                                  background: 'rgba(255,255,255,.70)',
+                                  textAlign: 'center',
+                                  boxSizing: 'border-box',
+                                }}
+                              />
+                            </td>
+                            <td style={{ padding: '4px 10px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={precioTapacanto}
+                                onChange={(e) =>
+                                  onUpdatePrecio('tapacanto', color.nombre, Number(e.target.value))
+                                }
+                                style={{
+                                  width: '100%',
+                                  maxWidth: 120,
+                                  padding: '6px 8px',
+                                  border: '1px solid rgba(217,217,217,.7)',
+                                  borderRadius: 6,
+                                  fontSize: 13,
+                                  background: 'rgba(255,255,255,.70)',
+                                  textAlign: 'center',
+                                  boxSizing: 'border-box',
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        )
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="3" style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                          Cargando colores...
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(200,180,160,.3)' }}>
+                <p style={{ fontWeight: 700, fontSize: 13, color: '#222222', marginBottom: 10 }}>
+                  MDF melamínico
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                  {[
+                    ['mdf9', 'MDF 9mm (Blanco)'],
+                    ['mdf18', 'MDF 18mm (Blanco)'],
+                  ].map(([k, l]) => (
+                    <div key={k}>
+                      <label style={{ fontSize: 11, color: '#666', fontWeight: 700, display: 'block', marginBottom: 2 }}>
+                        {l} ($)
+                      </label>
+                      <input
+                        type="number"
+                        value={precios[k] || 0}
+                        onChange={(e) => onUpdatePrecio(k, null, Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          border: '1px solid rgba(217,217,217,.7)',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          background: 'rgba(255,255,255,.70)',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontWeight: 700, fontSize: 13, color: '#222222', marginBottom: 10 }}>
+                  Quincallería (precio unitario)
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                  {[
+                    ['tornillos', 'Tornillos — caja'],
+                    ['manillas', 'Manillas'],
+                    ['ruedas', 'Ruedas'],
+                    ['bisagras', 'Bisagras'],
+                  ].map(([k, l]) => (
+                    <div key={k}>
+                      <label style={{ fontSize: 11, color: '#666', fontWeight: 700, display: 'block', marginBottom: 2 }}>
+                        {l} ($)
+                      </label>
+                      <input
+                        type="number"
+                        value={precios[k] || 0}
+                        onChange={(e) => onUpdatePrecio(k, null, Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          border: '1px solid rgba(217,217,217,.7)',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          background: 'rgba(255,255,255,.70)',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={handleGuardarPreciosBD}
+                className="btn-primary"
+                style={{
+                  width: '100%',
+                  marginTop: 16,
+                  background: '#2d5a3d',
+                  padding: '12px 16px',
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              >
+                Guardar todos los precios en la BD
+              </button>
+            </Card>
+          )}
           {section === 'calculadora' && (
             <Card style={{ padding: 16 }}>
-              <h4 style={{ fontWeight: 700, marginBottom: 14 }}>🧮 Calculadora de presupuesto</h4>
+              <h4 style={{ fontWeight: 700, marginBottom: 14 }}>Calculadora de presupuesto</h4>
+
               <div style={{ marginBottom: 10 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#444', display: 'block', marginBottom: 4 }}>📋 Cotización de referencia</label>
-                <select value={calcCotId} onChange={e => {
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#444', display: 'block', marginBottom: 4 }}>
+                  Cotización de referencia
+                </label>
+                <select
+                  value={calcCotId}
+                  onChange={(e) => {
                     const val = e.target.value
                     setCalcCotId(val)
-                    const q = cotizaciones.find(c => String(c.id) === val)
-                    if (q?.color) { setMatMelTipo(q.color); setMatTcTipo(q.color) }
+                    const q = cotizaciones.find((c) => String(c.id) === val)
+                    if (q?.color) {
+                      setMatMelTipo(q.color)
+                      setMatTcTipo(q.color)
+                    }
                   }}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,.70)', boxSizing: 'border-box' }}>
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid rgba(217,217,217,.7)',
+                    borderRadius: 10,
+                    fontSize: 14,
+                    background: 'rgba(255,255,255,.70)',
+                    boxSizing: 'border-box',
+                  }}
+                >
                   <option value="">— Selecciónar cotización —</option>
-                  {cotizaciones.map(c => <option key={c.id} value={String(c.id)}>[{c.código}] {c.nombre} — {c.tipo}</option>)}
+                  {cotizaciones.map((c) => (
+                    <option key={c.id} value={String(c.id)}>
+                      [{c.código}] {c.nombre} — {c.tipo}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#222222', marginBottom: 10 }}>📦 Cantidades de materiales</p>
+              {(() => {
+                const q = cotizaciones.find((c) => String(c.id) === calcCotId)
+                if (!q) {
+                  return (
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '30px 20px',
+                        background: 'rgba(255,255,255,.4)',
+                        borderRadius: 12,
+                        border: '2px dashed rgba(200,180,160,.3)',
+                        color: '#888',
+                      }}
+                    >
+                      <div style={{ fontSize: 40, marginBottom: 10 }}>🪑</div>
+                      <p>Selecciona una cotización para ver los detalles</p>
+                    </div>
+                  )
+                }
+
+                const swatchBg = q.colorHex || null
+
+                return (
+                  <div
+                    style={{
+                      background: 'rgba(255,255,255,.65)',
+                      border: '1px solid rgba(200,180,160,.35)',
+                      borderRadius: 12,
+                      padding: 14,
+                      marginBottom: 14,
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: 12 }}>
+                      {q.adjuntoBase64 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                          <div
+                            style={{
+                              background: '#fff',
+                              borderRadius: 10,
+                              padding: 6,
+                              boxShadow: '0 2px 8px rgba(0,0,0,.08)',
+                              cursor: 'pointer',
+                              transition: 'transform 0.2s',
+                            }}
+                            onClick={() => {
+                              window.open(q.adjuntoBase64, '_blank')
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.02)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                          >
+                            <img
+                              src={q.adjuntoBase64}
+                              style={{
+                                width: 180,
+                                height: 140,
+                                objectFit: 'contain',
+                                borderRadius: 7,
+                                background: '#f5f5f5',
+                              }}
+                              alt="Referencia"
+                            />
+                          </div>
+                          <span style={{ fontSize: 10, color: '#888' }}>Haz clic para ampliar</span>
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            width: 180,
+                            height: 140,
+                            background: 'rgba(139,94,60,.08)',
+                            borderRadius: 10,
+                            border: '2px dashed rgba(139,94,60,.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexDirection: 'column',
+                            gap: 4,
+                          }}
+                        >
+                          <span style={{ fontSize: 32 }}>🪑</span>
+                          <span style={{ fontSize: 11, color: '#888', textAlign: 'center', padding: '0 10px' }}>
+                            {q.tipo}
+                          </span>
+                          <span style={{ fontSize: 9, color: '#aaa' }}>Sin imagen de referencia</span>
+                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 180 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 14px', fontSize: 13 }}>
+                          {[
+                            ['Cliente', q.nombre],
+                            ['Tipo', q.tipo],
+                            ['Ancho × Alto × Prof', q.dim.ancho + ' × ' + q.dim.alto + ' × ' + q.dim.prof + ' cm'],
+                          ].map(([k, v]) => (
+                            <div key={k}>
+                              <span style={{ color: '#888', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
+                                {k}
+                              </span>
+                              <div style={{ fontWeight: 700, marginTop: 1 }}>{v}</div>
+                            </div>
+                          ))}
+                          <div>
+                            <span style={{ color: '#888', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
+                              Estado
+                            </span>
+                            <div style={{ marginTop: 2 }}>
+                              <span
+                                style={{
+                                  background: ETAPA_COLOR[q.estado] || '#555',
+                                  color: '#fff',
+                                  fontSize: 11,
+                                  padding: '2px 8px',
+                                  borderRadius: 99,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {ETAPA_LABEL[q.estado] || q.estado}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {swatchBg ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: 8,
+                          background: 'rgba(255,255,255,.6)',
+                          borderRadius: 8,
+                          border: '1px solid rgba(200,180,160,.3)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: 8,
+                            background: swatchBg,
+                            border: '1.5px solid rgba(0,0,0,.12)',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: '#888',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              marginBottom: 2,
+                            }}
+                          >
+                            Color / tipo
+                          </div>
+                          <div style={{ fontWeight: 700, fontSize: 13 }}>{q.color || '—'}</div>
+                          <div style={{ fontSize: 11, color: '#888' }}>{q.material || '—'}</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          padding: 8,
+                          background: 'rgba(255,255,255,.6)',
+                          borderRadius: 8,
+                          border: '1px solid rgba(200,180,160,.3)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: '#888',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            marginBottom: 2,
+                          }}
+                        >
+                          Material
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 13 }}>{q.material || '—'}</div>
+                      </div>
+                    )}
+
+                    {q.descripción && (
+                      <div style={{ marginTop: 8 }}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: '#888',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            marginBottom: 3,
+                          }}
+                        >
+                          Descripción
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            color: '#333',
+                            padding: 8,
+                            background: 'rgba(255,255,255,.6)',
+                            borderRadius: 8,
+                            border: '1px solid rgba(200,180,160,.25)',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {q.descripción}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#5c3a1e', marginBottom: 10 }}>
+                Cantidades de materiales
+              </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: '#444', display: 'block', marginBottom: 2 }}>Láminas melamina</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#444', display: 'block', marginBottom: 2 }}>
+                    Láminas melamina
+                  </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 6 }}>
-                    <input type="number" min="0" value={matMel} onChange={e => setMatMel(e.target.value)} style={{ padding: '8px 10px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,.70)' }} />
-                    <select value={matMelTipo} onChange={e => setMatMelTipo(e.target.value)} style={{ padding: '8px 10px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,.70)' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={matMel}
+                      onChange={(e) => setMatMel(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                      }}
+                    />
+                    <select
+                      value={matMelTipo}
+                      onChange={(e) => setMatMelTipo(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                      }}
+                    >
                       <option value="">Sin Especificar</option>
-                      {['únicolores','clasico','forest'].map(g => (
-                        <optgroup key={g} label={g.charAt(0).toUpperCase()+g.slice(1)}>
-                          {MELAMINA_COLORES[g]?.map(c => <option key={c.nombre} value={c.nombre}>{c.nombre}</option>) || []}
-                        </optgroup>
+                      {coloresDB && coloresDB.length > 0
+                        ? coloresDB.map((c) => (
+                            <option key={c.nombre} value={c.nombre}>
+                              {c.nombre}
+                            </option>
+                          ))
+                        : null}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#444', display: 'block', marginBottom: 2 }}>
+                    Láminas MDF
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 6 }}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={matMdf}
+                      onChange={(e) => setMatMdf(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                      }}
+                    />
+                    <select
+                      value={matMdfTipo}
+                      onChange={(e) => setMatMdfTipo(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                      }}
+                    >
+                      {MDF_GROSORES.map((g) => (
+                        <option key={g} value={g}>
+                          {g}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: '#444', display: 'block', marginBottom: 2 }}>Láminas MDF</label>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#444', display: 'block', marginBottom: 2 }}>
+                    Tapacanto (rollos)
+                  </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 6 }}>
-                    <input type="number" min="0" value={matMdf} onChange={e => setMatMdf(e.target.value)} style={{ padding: '8px 10px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,.70)' }} />
-                    <select value={matMdfTipo} onChange={e => setMatMdfTipo(e.target.value)} style={{ padding: '8px 10px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,.70)' }}>
-                      {MDF_GROSORES.map(g => <option key={g} value={g}>{g}</option>)}
+                    <input
+                      type="number"
+                      min="0"
+                      value={matTapacanto}
+                      onChange={(e) => setMatTapacanto(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                      }}
+                    />
+                    <select
+                      value={matTcTipo}
+                      onChange={(e) => setMatTcTipo(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                      }}
+                    >
+                      <option value="">Sin Especificar</option>
+                      {coloresDB && coloresDB.length > 0
+                        ? coloresDB.map((c) => (
+                            <option key={c.nombre} value={c.nombre}>
+                              {c.nombre} — ${(precios.tapacanto?.[c.nombre] || 0).toLocaleString('es-CL')}
+                            </option>
+                          ))
+                        : null}
                     </select>
                   </div>
                 </div>
+                {[
+                  ['Tornillos (cajas)', matTornillos, setMatTornillos, null, null],
+                  ['Manillas', matManillas, setMatManillas, matManillaP, setMatManillaP],
+                  ['Ruedas', matRuedas, setMatRuedas, matRuedasP, setMatRuedasP],
+                  ['Bisagras', matBisagras, setMatBisagras, matBisagrasP, setMatBisagrasP],
+                ].map(([label, q, setQ, p, setP]) => (
+                  <div key={label}>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: '#444', display: 'block', marginBottom: 2 }}>
+                      {label}
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: p !== null ? '1fr 1fr' : '1fr', gap: 6 }}>
+                      <input
+                        type="number"
+                        min="0"
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Cant."
+                        style={{
+                          padding: '8px 10px',
+                          border: '1px solid rgba(217,217,217,.7)',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          background: 'rgba(255,255,255,.70)',
+                        }}
+                      />
+                      {p !== null && (
+                        <input
+                          type="number"
+                          min="0"
+                          value={p}
+                          onChange={(e) => setP(e.target.value)}
+                          placeholder="Precio unit."
+                          style={{
+                            padding: '8px 10px',
+                            border: '1px solid rgba(217,217,217,.7)',
+                            borderRadius: 8,
+                            fontSize: 13,
+                            background: 'rgba(255,255,255,.70)',
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#444', display: 'block', marginBottom: 2 }}>
+                    Mano de obra ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={matMano}
+                    onChange={(e) => setMatMano(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px solid rgba(217,217,217,.7)',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      background: 'rgba(255,255,255,.70)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
               </div>
-              <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Btn onClick={() => {
-                  const total = calcTotal()
-                  alert(`Total presupuesto: $${total.toLocaleString('es-CL')}`)
-                }}>💰 Calcular total</Btn>
+
+              <div style={{ marginBottom: 10 }}>
+                {extras.map((ex, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: 'rgba(255,255,255,.5)',
+                      border: '1px solid rgba(200,180,160,.4)',
+                      borderRadius: 10,
+                      padding: 10,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#5c3a1e' }}>Extra #{i + 1}</span>
+                      <button
+                        onClick={() => setExtras(extras.filter((_, j) => j !== i))}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b00020', fontSize: 16 }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <input
+                      value={ex.desc}
+                      onChange={(e) => setExtras(extras.map((x, j) => (j === i ? { ...x, desc: e.target.value } : x)))}
+                      placeholder="Descripción"
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                        marginBottom: 6,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      <input
+                        type="number"
+                        min="0"
+                        value={ex.q}
+                        onChange={(e) => setExtras(extras.map((x, j) => (j === i ? { ...x, q: e.target.value } : x)))}
+                        placeholder="Cantidad"
+                        style={{
+                          padding: '8px 10px',
+                          border: '1px solid rgba(217,217,217,.7)',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          background: 'rgba(255,255,255,.70)',
+                        }}
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        value={ex.p}
+                        onChange={(e) => setExtras(extras.map((x, j) => (j === i ? { ...x, p: e.target.value } : x)))}
+                        placeholder="Precio unit."
+                        style={{
+                          padding: '8px 10px',
+                          border: '1px solid rgba(217,217,217,.7)',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          background: 'rgba(255,255,255,.70)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => setExtras([...extras, { desc: '', q: 0, p: 0 }])}
+                  style={{
+                    background: 'transparent',
+                    border: '1.5px solid #1a1a1a',
+                    borderRadius: 8,
+                    padding: '8px 14px',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#1a1a1a',
+                  }}
+                >
+                  + Agregar ítem extra
+                </button>
               </div>
+
+              {(() => {
+                const melP = matMelTipo ? precios.melamina?.[matMelTipo] || 0 : 0
+                const mdfP = matMdfTipo?.includes('18') ? precios.mdf18 : precios.mdf9
+                const tcP = matTcTipo ? precios.tapacanto?.[matTcTipo] || 0 : 0
+
+                const filas = [
+                  { label: `Melamina${matMelTipo ? ' — ' + matMelTipo : ''}`, q: matMel, p: melP, show: Number(matMel) > 0 },
+                  { label: `MDF ${matMdfTipo?.includes('18') ? '18mm' : '9mm'}`, q: matMdf, p: mdfP, show: Number(matMdf) > 0 },
+                  { label: `Tapacanto${matTcTipo ? ' — ' + matTcTipo : ''}`, q: matTapacanto, p: tcP, show: Number(matTapacanto) > 0 },
+                  { label: 'Tornillos (cajas)', q: matTornillos, p: precios.tornillos || 0, show: Number(matTornillos) > 0 },
+                  { label: 'Manillas', q: matManillas, p: matManillaP || precios.manillas || 0, show: Number(matManillas) > 0 },
+                  { label: 'Ruedas', q: matRuedas, p: matRuedasP || precios.ruedas || 0, show: Number(matRuedas) > 0 },
+                  { label: 'Bisagras', q: matBisagras, p: matBisagrasP || precios.bisagras || 0, show: Number(matBisagras) > 0 },
+                  ...extras.filter(e => Number(e.q) > 0).map(e => ({ label: e.desc || 'Ítem extra', q: e.q, p: e.p, show: true })),
+                ].filter(f => f.show)
+
+                const subtotal = filas.reduce((acc, f) => acc + (Number(f.q) || 0) * (Number(f.p) || 0), 0)
+                const mano = Number(matMano) || 0
+                const total = subtotal + mano
+
+                return (
+                  <>
+                    {filas.length > 0 || mano > 0 ? (
+                      <div style={{ border: '1px solid rgba(200,180,160,.4)', borderRadius: 10, overflow: 'hidden', marginTop: 10 }}>
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 70px 90px 90px',
+                            background: 'rgba(139,94,60,.12)',
+                            padding: '7px 12px',
+                            fontSize: 11,
+                            fontWeight: 800,
+                            color: '#5c3a1e',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                          }}
+                        >
+                          <span>Ítem</span>
+                          <span style={{ textAlign: 'center' }}>Cant.</span>
+                          <span style={{ textAlign: 'right' }}>P. Unit.</span>
+                          <span style={{ textAlign: 'right' }}>Subtotal</span>
+                        </div>
+
+                        {filas.map((f, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 70px 90px 90px',
+                              padding: '7px 12px',
+                              fontSize: 13,
+                              borderTop: '1px solid rgba(200,180,160,.25)',
+                              background: i % 2 === 0 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.3)',
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>{f.label}</span>
+                            <span style={{ textAlign: 'center', color: '#555' }}>{f.q}</span>
+                            <span style={{ textAlign: 'right', color: '#555' }}>
+                              ${(Number(f.p) || 0).toLocaleString('es-CL')}
+                            </span>
+                            <span style={{ textAlign: 'right', fontWeight: 700 }}>
+                              ${((Number(f.q) || 0) * (Number(f.p) || 0)).toLocaleString('es-CL')}
+                            </span>
+                          </div>
+                        ))}
+
+                        {mano > 0 && (
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 70px 90px 90px',
+                              padding: '7px 12px',
+                              fontSize: 13,
+                              borderTop: '1px solid rgba(200,180,160,.25)',
+                              background: filas.length % 2 === 0 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.3)',
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>Mano de obra</span>
+                            <span style={{ textAlign: 'center', color: '#888' }}>—</span>
+                            <span style={{ textAlign: 'right', color: '#888' }}>—</span>
+                            <span style={{ textAlign: 'right', fontWeight: 700 }}>
+                              ${mano.toLocaleString('es-CL')}
+                            </span>
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            borderTop: '2px solid rgba(139,94,60,.3)',
+                            background: 'rgba(139,94,60,.08)',
+                            padding: '10px 12px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#5c3a1e' }}>TOTAL PRESUPUESTO</span>
+                          <span style={{ fontSize: 20, fontWeight: 800, color: '#5c3a1e' }}>
+                            ${total.toLocaleString('es-CL')}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ background: 'rgba(139,94,60,.08)', borderRadius: 10, padding: 14, marginTop: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800, color: '#5c3a1e' }}>
+                          <span>TOTAL PRESUPUESTO</span>
+                          <span>${total.toLocaleString('es-CL')}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <button
+                        onClick={async () => {
+                          const q = cotizaciones.find((c) => String(c.id) === calcCotId)
+                          try {
+                            const payload = {
+                              cotizacion: q || null,
+                              filas,
+                              mano,
+                              total,
+                              fecha: new Date().toLocaleDateString('es-CL'),
+                            }
+                            const res = await fetch('/api/pdf/presupuesto', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload),
+                            })
+                            if (!res.ok) throw new Error('Error al generar PDF')
+                            const blob = await res.blob()
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = `PRESUPUESTO_${q ? q.código : 'SIN'}.pdf`
+                            a.click()
+                            URL.revokeObjectURL(url)
+                          } catch (e) {
+                            alert('No se pudo generar el PDF: ' + e.message)
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          background: '#1a1a1a',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '12px 16px',
+                          borderRadius: 10,
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          fontWeight: 700,
+                        }}
+                      >
+                        Generar PDF presupuesto
+                      </button>
+
+                      <button
+                        onClick={enviarCorreoPresupuesto}
+                        disabled={emailSending || !calcCotId}
+                        style={{
+                          flex: 1,
+                          background: emailSending ? '#888' : '#2d5a3d',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '12px 16px',
+                          borderRadius: 10,
+                          cursor: emailSending || !calcCotId ? 'not-allowed' : 'pointer',
+                          fontSize: 14,
+                          fontWeight: 700,
+                          opacity: emailSending || !calcCotId ? 0.6 : 1,
+                        }}
+                      >
+                        {emailSending ? 'Enviando...' : 'Enviar presupuesto por correo'}
+                      </button>
+                    </div>
+
+                    {emailStatus === 'ok' && (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          padding: '8px 12px',
+                          background: 'rgba(46,125,50,.1)',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          color: '#2e7d32',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                        }}
+                      >
+                        Presupuesto enviado correctamente
+                      </div>
+                    )}
+                    {emailStatus === 'error' && (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          padding: '8px 12px',
+                          background: 'rgba(198,40,40,.1)',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          color: '#c62828',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                        }}
+                      >
+                        Error al enviar el correo
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
             </Card>
           )}
-
           {section === 'chat' && (
             <Card style={{ padding: 16 }}>
-              <h4 style={{ fontWeight: 700, marginBottom: 12 }}>💬 Chat con clientes</h4>
+              <h4 style={{ fontWeight: 700, marginBottom: 12 }}>Chat con clientes</h4>
               <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-                {[['todos','Todos'],['fabricación','Fabricación'],['entregado','Entregados']].map(([v, l]) => (
-                  <button key={v} onClick={() => setChatFilter(v)} className={chatFilter === v ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}>{l}</button>
+                {[
+                  ['todos', 'Todos'],
+                  ['fabricación', 'Fabricación'],
+                  ['entregado', 'Entregados'],
+                ].map(([v, l]) => (
+                  <button
+                    key={v}
+                    onClick={() => setChatFilter(v)}
+                    className={chatFilter === v ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}
+                  >
+                    {l}
+                  </button>
                 ))}
               </div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#444', display: 'block', marginBottom: 4 }}>Selecciónar conversación</label>
-              <select value={selectedId || ''} onChange={e => setSelectedId(Number(e.target.value))}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 10, fontSize: 14, background: 'rgba(255,255,255,.70)', marginBottom: 10, boxSizing: 'border-box' }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#444', display: 'block', marginBottom: 4 }}>
+                Selecciónar conversación
+              </label>
+              <select
+                value={selectedId || ''}
+                onChange={(e) => setSelectedId(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid rgba(217,217,217,.7)',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  background: 'rgba(255,255,255,.70)',
+                  marginBottom: 10,
+                  boxSizing: 'border-box',
+                }}
+              >
                 <option value="">— Selecciónar conversación —</option>
-                {chatFiltered.map(q => <option key={q.id} value={q.id}>[{q.código}] {q.nombre} ({ETAPA_LABEL[q.estado]})</option>)}
+                {chatFiltered.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    [{q.código}] {q.nombre} ({ETAPA_LABEL[q.estado]})
+                  </option>
+                ))}
               </select>
-              {cot && (
+              {cot ? (
                 <>
-                  <p className="muted" style={{ fontSize: 13, marginBottom: 8 }}>Cliente: {cot.nombre} · {cot.email} · Estado: {ETAPA_LABEL[cot.estado]}</p>
-                  <div style={{ minHeight: 160, maxHeight: 320, overflowY: 'auto', border: '1px solid rgba(221,221,221,.6)', borderRadius: 8, padding: 10, background: 'rgba(255,255,255,.5)', fontSize: 13, lineHeight: 1.7, marginBottom: 8 }}>
-                    {cot.mensajes.map((m, i) => <p key={i} style={{ marginBottom: 4 }}><b style={{ color: m.autor === 'admin' ? '#1a1a1a' : '#1f1f1f' }}>{m.autor}:</b> {m.texto}</p>)}
+                  <p className="muted" style={{ fontSize: 13, marginBottom: 8 }}>
+                    Cliente: {cot.nombre} · {cot.email} · Estado: {ETAPA_LABEL[cot.estado]}
+                  </p>
+                  <div
+                    style={{
+                      minHeight: 160,
+                      maxHeight: 320,
+                      overflowY: 'auto',
+                      border: '1px solid rgba(221,221,221,.6)',
+                      borderRadius: 8,
+                      padding: 10,
+                      background: 'rgba(255,255,255,.5)',
+                      fontSize: 13,
+                      lineHeight: 1.7,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {cot.mensajes.map((m, i) => (
+                      <p key={i} style={{ marginBottom: 4 }}>
+                        <b style={{ color: m.autor === 'admin' ? '#1a1a1a' : '#1f1f1f' }}>{m.autor}:</b> {m.texto}
+                      </p>
+                    ))}
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                    <input value={msgAdmin} onChange={e => setMsgAdmin(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter' && msgAdmin.trim() && !cot.chatCerrado) { onSendMsg(cot.id, msgAdmin.trim(), 'admin'); setMsgAdmin('') } }}
-                      disabled={cot.chatCerrado} placeholder={cot.chatCerrado ? 'Chat cerrado' : 'Escribe tu mensaje...'}
-                      style={{ flex: 1, padding: '10px 12px', border: '1px solid rgba(217,217,217,.7)', borderRadius: 10, fontSize: 13, background: 'rgba(255,255,255,.70)', outline: 'none', opacity: cot.chatCerrado ? 0.55 : 1, boxSizing: 'border-box' }} />
-                    <Btn disabled={cot.chatCerrado} onClick={() => { if (msgAdmin.trim()) { onSendMsg(cot.id, msgAdmin.trim(), 'admin'); setMsgAdmin('') } }}>Enviar</Btn>
+                    <input
+                      value={msgAdmin}
+                      onChange={(e) => setMsgAdmin(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && msgAdmin.trim() && !cot.chatCerrado) {
+                          onSendMsg(cot.id, msgAdmin.trim(), 'admin')
+                          setMsgAdmin('')
+                        }
+                      }}
+                      disabled={cot.chatCerrado}
+                      placeholder={cot.chatCerrado ? 'Chat cerrado' : 'Escribe tu mensaje...'}
+                      style={{
+                        flex: 1,
+                        padding: '10px 12px',
+                        border: '1px solid rgba(217,217,217,.7)',
+                        borderRadius: 10,
+                        fontSize: 13,
+                        background: 'rgba(255,255,255,.70)',
+                        outline: 'none',
+                        opacity: cot.chatCerrado ? 0.55 : 1,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <Btn
+                      disabled={cot.chatCerrado}
+                      onClick={() => {
+                        if (msgAdmin.trim()) {
+                          onSendMsg(cot.id, msgAdmin.trim(), 'admin')
+                          setMsgAdmin('')
+                        }
+                      }}
+                    >
+                      Enviar
+                    </Btn>
                   </div>
-                  <Btn outline small onClick={() => onToggleChat(cot.id, !cot.chatCerrado)}>{cot.chatCerrado ? '🔓 Abrir chat' : '🔒 Cerrar conversación'}</Btn>
-                  {cot.chatCerrado && <p className="muted" style={{ marginTop: 8, color: '#b00020' }}>Conversación cerrada.</p>}
+                  <Btn outline small onClick={() => onToggleChat(cot.id, !cot.chatCerrado)}>
+                    {cot.chatCerrado ? 'Abrir chat' : 'Cerrar conversación'}
+                  </Btn>
+                  {cot.chatCerrado && (
+                    <p className="muted" style={{ marginTop: 8, color: '#b00020' }}>
+                      Conversación cerrada.
+                    </p>
+                  )}
                 </>
+              ) : (
+                <p className="muted">Selecciona una conversación</p>
               )}
-            </Card>
-          )}
-
-          {section === 'clientes' && (
-            <Card style={{ padding: 24 }}>
-              <h3 style={{ fontWeight: 800, marginBottom: 16, color: '#222222' }}>👥 Clientes registrados</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {clientes.filter(c => !c.is_admin).map(c => (
-                  <div key={c.email} style={{ padding: '12px 14px', background: 'rgba(255,255,255,.6)', borderRadius: 10, border: '1px solid rgba(200,180,160,.3)', fontSize: 13 }}>
-                    <div style={{ fontWeight: 700 }}>{c.nombres} {c.apellidos}</div>
-                    <div style={{ color: '#666' }}>{c.email} · {c.telefono || '—'}</div>
-                  </div>
-                ))}
-              </div>
             </Card>
           )}
         </div>
@@ -1828,148 +3932,154 @@ function PageAdmin({ cotizaciones, clientes, precios, coloresDB = [], cargarColo
   )
 }
 
-/* ════════════════════════════════════════════════════════════
-   FOOTER CONTACTO
-   ════════════════════════════════════════════════════════════ */
 function FooterContacto() {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-  useEffect(() => {
-    const fn = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', fn)
-    return () => document.removeEventListener('mousedown', fn)
-  }, [])
   return (
-    <div style={{ position: 'fixed', left: 18, right: 18, bottom: 14, zIndex: 60, display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'none' }}>
-      <span style={{ color: '#333', fontSize: 12, fontWeight: 600, textShadow: '0 1px 3px rgba(255,255,255,.8)', userSelect: 'none' }}>© 2025 Hernández Muebles</span>
-      <div ref={ref} style={{ pointerEvents: 'all', position: 'relative' }}>
-        <button id="btn-contacto" onClick={() => setOpen(o => !o)} style={{ background: 'rgba(255,255,255,.82)', border: '1.5px solid rgba(26,26,26,.4)', borderRadius: 999, padding: '7px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#222222', display: 'flex', alignItems: 'center', gap: 6, backdropFilter: 'blur(6px)', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}>📬 Contacto</button>
-        {open && (
-          <div style={{ position: 'absolute', bottom: 44, right: 0, background: 'rgba(255,255,255,.97)', border: '1px solid rgba(221,221,221,.8)', borderRadius: 14, padding: '16px 20px', boxShadow: '0 8px 24px rgba(0,0,0,.15)', fontSize: 13, minWidth: 240 }}>
-            <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#888' }}>✕</button>
-            <p style={{ fontWeight: 700, color: '#222222', marginBottom: 8, fontSize: 14 }}>📬 Contacto</p>
-            <p style={{ color: '#444', marginBottom: 4 }}>✉ joserhernandezmuebles@gmail.com</p>
-            <p style={{ color: '#444' }}>📱 +56 9 XXXX XXXX</p>
-          </div>
-        )}
-      </div>
+    <div
+      style={{
+        position: 'fixed',
+        left: 18,
+        right: 18,
+        bottom: 14,
+        zIndex: 60,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        pointerEvents: 'none',
+      }}
+    >
+      <span
+        style={{
+          color: '#333',
+          fontSize: 12,
+          fontWeight: 600,
+          textShadow: '0 1px 3px rgba(255,255,255,.8)',
+          userSelect: 'none',
+        }}
+      >
+        © 2025 Hernández Muebles
+      </span>
+      <a
+        href="mailto:joserhernandezmuebles@gmail.com"
+        style={{
+          pointerEvents: 'all',
+          background: 'rgba(255,255,255,.82)',
+          border: '1.5px solid rgba(26,26,26,.4)',
+          borderRadius: 999,
+          padding: '7px 16px',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 700,
+          color: '#222222',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          backdropFilter: 'blur(6px)',
+          boxShadow: '0 2px 8px rgba(0,0,0,.1)',
+          textDecoration: 'none',
+        }}
+      >
+        Contacto
+      </a>
     </div>
   )
 }
 
-/* ════════════════════════════════════════════════════════════
-   APP ROOT
-   ════════════════════════════════════════════════════════════ */
 export default function App() {
-
-  
-  const [page, setPage]               = useState('home')
+  const [page, setPage] = useState('home')
   const [clientePanel, setClientePanel] = useState('perfil')
   const [currentUser, setCurrentUser] = useState(null)
-  const [clientes, setClientes]       = useState([])
   const [cotizaciones, setCotizaciones] = useState([])
-  const [coloresDB, setColoresDB]     = useState([])
-  const [preciosDB, setPreciosDB]     = useState({})
-  const [cargando, setCargando]       = useState(false)
-  const [showAuth, setShowAuth]       = useState(false)
+  const [coloresDB, setColoresDB] = useState([])
+  const [preciosDB, setPreciosDB] = useState({})
+  const [precios, setPrecios] = useState({})
+  const [cargando, setCargando] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
   const [showCotizar, setShowCotizar] = useState(false)
-  const [precios, setPrecios]         = useState({})
-  
-  useEffect(() => {
-  const savedUser = localStorage.getItem('currentUser')
-  if (savedUser) {
-    try {
-      const user = JSON.parse(savedUser)
-      setCurrentUser(user)
-      // Cargar datos solo una vez al iniciar
-      const cargarDatos = async () => {
-        await cargarColoresDB()
-        await cargarPreciosDB()
-        await cargarCotizaciones()
-      }
-      cargarDatos()
-    } catch (e) {
-      console.error('Error al restaurar sesión:', e)
-    }
-  }
-}, []) // 👈 Dependencias vacías = solo una vez
 
-  /* ════════════════════════════════════════════════════════════
-     FUNCIONES DE API — CONEXIÓN CON SUPABASE
-     ════════════════════════════════════════════════════════════ */
-
-  // Cargar cotizaciones desde Supabase
   async function cargarCotizaciones() {
-    if (!currentUser) return
+  if (!currentUser) return
+  try {
+    setCargando(true)
+    const url = currentUser.is_admin
+      ? '/api/cotizaciones'
+      : `/api/cotizaciones?clienteId=${currentUser.id}`
+    const res = await fetch(url)
+    const data = await res.json()
     
-    try {
-      setCargando(true)
-      const url = currentUser.is_admin 
-        ? '/api/cotizaciones'
-        : `/api/cotizaciones?clienteId=${currentUser.id}`
-      
-      const res = await fetch(url)
-      const data = await res.json()
-      
-      if (data.cotizaciones) {
-        const etapas = ['cotización', 'fabricación', 'entrega', 'entregado']
-        const tipos = ['Escritorio', 'Cocina', 'Baño', 'Otro']
-        
-        const formateadas = await Promise.all(data.cotizaciones.map(async (c) => {
-          const mensajesRes = await fetch(`/api/cotizaciones/${c.id}/mensajes`)
-          const mensajesData = await mensajesRes.json()
+    if (data.cotizaciones) {
+      const etapas = ['cotización', 'fabricación', 'entrega', 'entregado']
+      const tipos = ['Escritorio', 'Cocina', 'Baño', 'Otro']
+      const formateadas = await Promise.all(
+        data.cotizaciones.map(async (c) => {
+          let mensajes = []
+          let clienteData = null
           
+          try {
+            const mensajesRes = await fetch(`/api/cotizaciones/${c.id}/mensajes`)
+            const mensajesData = await mensajesRes.json()
+            mensajes = mensajesData.mensajes || []
+          } catch (e) {
+            console.warn('Error cargando mensajes:', e)
+          }
+
+          // Obtener cliente por separado si no viene en la cotización
+          try {
+            if (c.cliente_id) {
+              const clienteRes = await fetch(`/api/clientes/${c.cliente_id}`)
+              const clienteJson = await clienteRes.json()
+              clienteData = clienteJson.cliente
+            }
+          } catch (e) {
+            console.warn('Error cargando cliente:', e)
+          }
+
           return {
             id: c.id,
             código: c.codigo,
             estado: etapas[c.etapa_id - 1] || 'cotización',
             clienteEmail: c.cliente_id,
-            nombre: currentUser?.nombres || '',
-            email: currentUser?.email || '',
-            número: currentUser?.telefono || '',
+            nombre: clienteData?.nombres + ' ' + clienteData?.apellidos || c.clientes?.nombres + ' ' + c.clientes?.apellidos || 'Cliente',
+            email: clienteData?.email || c.clientes?.email || '',
+            número: clienteData?.telefono || c.clientes?.telefono || '',
             tipo: c.tipo_otro || tipos[c.tipo_id - 1] || '',
             tipoOtro: c.tipo_otro || '',
             diseñoId: '',
             diseñoTitulo: c.diseno_titulo || '',
             dim: { ancho: c.ancho, alto: c.alto, prof: c.prof },
-            material: c.material,
-            color: c.color,
-            colorHex: c.color_hex,
-            colorTextura: c.color_textura,
-            colorGrain: c.color_grain,
-            descripción: c.descripcion,
+            material: c.material || '--',
+            color: c.color || '--',
+            colorHex: c.color_hex || '',
+            colorTextura: c.color_textura || '',
+            colorGrain: c.color_grain || '',
+            descripción: c.descripcion || '',
             adjunto: null,
             adjuntoBase64: c.adjunto_url || null,
             fecha: new Date(c.fecha).toLocaleString('es-CL'),
-            mensajes: mensajesData.mensajes || [],
-            chatCerrado: c.chat_cerrado
+            mensajes: mensajes,
+            chatCerrado: c.chat_cerrado || false,
           }
-        }))
-        
-        setCotizaciones(formateadas)
-      }
-    } catch (error) {
-      console.error('Error cargando cotizaciones:', error)
-    } finally {
-      setCargando(false)
+        })
+      )
+      setCotizaciones(formateadas)
     }
+  } catch (error) {
+    console.error('❌ Error cargando cotizaciones:', error)
+  } finally {
+    setCargando(false)
   }
+}
 
-  // Subir imagen a Supabase Storage
   async function subirImagen(base64, codigo) {
     try {
       const res = await fetch(base64)
       const blob = await res.blob()
-      
       const formData = new FormData()
       const extension = blob.type === 'image/png' ? 'png' : 'jpg'
       formData.append('file', blob, `cotizacion_${codigo}.${extension}`)
-      
       const uploadRes = await fetch('/api/storage/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
       })
-      
       const data = await uploadRes.json()
       return data.url || ''
     } catch (error) {
@@ -1978,19 +4088,15 @@ export default function App() {
     }
   }
 
-  // Crear nueva cotización
   async function crearCotizacion(datos) {
     if (!currentUser) throw new Error('Usuario no autenticado')
-    
     try {
-      const tiposMap = { 'Escritorio': 1, 'Cocina': 2, 'Baño': 3, 'Otro': 4 }
+      const tiposMap = { Escritorio: 1, Cocina: 2, Baño: 3, Otro: 4 }
       const tipoId = tiposMap[datos.tipo] || 4
-      
       let adjuntoUrl = ''
       if (datos.adjuntoBase64) {
         adjuntoUrl = await subirImagen(datos.adjuntoBase64, datos.código)
       }
-
       const payload = {
         cliente_id: currentUser.id,
         tipo_id: tipoId,
@@ -2005,15 +4111,13 @@ export default function App() {
         descripcion: datos.descripción || '',
         adjunto_url: adjuntoUrl,
         tipo_otro: datos.tipoOtro || '',
-        diseno_titulo: datos.diseñoTitulo || ''
+        diseno_titulo: datos.diseñoTitulo || '',
       }
-
       const res = await fetch('/api/cotizaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       })
-
       const data = await res.json()
       if (data.cotizacion) {
         await cargarCotizaciones()
@@ -2026,18 +4130,16 @@ export default function App() {
     }
   }
 
-  // Enviar mensaje
   async function enviarMensaje(cotizacionId, texto, autor) {
     if (!texto.trim()) return
-    
     try {
       const res = await fetch(`/api/cotizaciones/${cotizacionId}/mensajes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          autor: autor === 'admin' ? 'admin' : 'cliente', 
-          texto: texto.trim() 
-        })
+        body: JSON.stringify({
+          autor: autor === 'admin' ? 'admin' : 'cliente',
+          texto: texto.trim(),
+        }),
       })
       const data = await res.json()
       if (data.mensaje) {
@@ -2048,16 +4150,14 @@ export default function App() {
     }
   }
 
-  // Actualizar etapa
   async function actualizarEtapa(cotizacionId, etapa) {
     try {
-      const etapasMap = { 'cotización': 1, 'fabricación': 2, 'entrega': 3, 'entregado': 4 }
+      const etapasMap = { cotización: 1, fabricación: 2, entrega: 3, entregado: 4 }
       const etapaId = etapasMap[etapa] || 1
-      
       const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ etapa_id: etapaId })
+        body: JSON.stringify({ etapa_id: etapaId }),
       })
       const data = await res.json()
       if (data.cotizacion) {
@@ -2068,30 +4168,27 @@ export default function App() {
     }
   }
 
-  // Actualizar chat
   async function actualizarChat(cotizacionId, cerrado) {
-    try {
-      const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_cerrado: cerrado })
-      })
-      const data = await res.json()
-      if (data.cotizacion) {
-        await cargarCotizaciones()
-      }
-    } catch (error) {
-      console.error('Error actualizando chat:', error)
+  try {
+    const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_cerrado: cerrado }),
+    })
+    const data = await res.json()
+    if (data.cotizacion) {
+      await cargarCotizaciones()
     }
+  } catch (error) {
+    console.error('Error actualizando chat:', error)
   }
+}
 
-  // Eliminar cotización
   async function eliminarCotizacion(cotizacionId) {
     if (!confirm('¿Eliminar esta cotización?')) return
-    
     try {
       const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       })
       const data = await res.json()
       if (data.success) {
@@ -2103,93 +4200,112 @@ export default function App() {
   }
 
   async function cargarColoresDB(forzar = false) {
-  // Si ya hay colores y no se fuerza, no recargar
-  if (coloresDB.length > 0 && !forzar) {
-    console.log('⏭️ Colores ya cargados, omitiendo recarga')
-    return
-  }
-  
-  try {
-    console.log('🔄 Cargando colores desde Supabase...')
-    const res = await fetch('/api/colores')
-    const data = await res.json()
-    console.log('📦 Datos de colores recibidos:', data?.colores?.length || 0, 'colores')
-    
-    if (data.colores && data.colores.length > 0) {
-      setColoresDB(data.colores)
-      
-      // Sincronizar con precios
-      if (precios.melamina) {
-        const preciosActualizados = { ...precios.melamina }
-        data.colores.forEach(color => {
-          if (preciosActualizados[color.nombre] === undefined) {
-            preciosActualizados[color.nombre] = 0
-          }
+    if (coloresDB.length > 0 && !forzar) {
+      return
+    }
+    try {
+      const res = await fetch('/api/colores')
+      const data = await res.json()
+      if (data.colores && data.colores.length > 0) {
+        setColoresDB(data.colores)
+        const preciosMelamina = {}
+        data.colores.forEach((color) => {
+          preciosMelamina[color.nombre] = color.melamina || 0
         })
-        setPrecios(prev => ({
+        setPrecios((prev) => ({
           ...prev,
-          melamina: preciosActualizados
+          melamina: preciosMelamina,
         }))
       }
+    } catch (error) {
+      console.error('❌ Error cargando colores:', error)
     }
-  } catch (error) {
-    console.error('❌ Error cargando colores:', error)
   }
-}
 
-  async function cargarColoresDB(forzar = false) {
-  if (coloresDB.length > 0 && !forzar) {
-    console.log('⏭️ Colores ya cargados, omitiendo recarga')
-    return
-  }
-  
-  try {
-    console.log('🔄 Cargando colores desde Supabase...')
-    const res = await fetch('/api/colores')
-    const data = await res.json()
-    console.log('📦 Datos de colores recibidos:', data?.colores?.length || 0, 'colores')
-    
-    if (data.colores && data.colores.length > 0) {
-      setColoresDB(data.colores)
-      
-      // ⭐ EXTRAER PRECIOS DE LA TABLA COLORES ⭐
-      const preciosMelamina = {}
-      data.colores.forEach(color => {
-        // Usar el campo 'melamina' de la tabla colores
-        preciosMelamina[color.nombre] = color.melamina || 0
-      })
-      
-      console.log('💰 Precios de melamina desde tabla colores:', preciosMelamina)
-      
-      // Actualizar precios con los valores de la tabla colores
-      setPrecios(prev => ({
-        ...prev,
-        melamina: preciosMelamina
-      }))
+  async function cargarPreciosDB() {
+    try {
+      const res = await fetch('/api/precios')
+      const data = await res.json()
+      if (data.precios) {
+        const melaminaPrecios = {}
+        const tapacantoPrecios = {}
+        const otrosPrecios = {}
+        Object.keys(data.precios).forEach((clave) => {
+          const valor = data.precios[clave]
+          if (clave.startsWith('melamina_')) {
+            const nombre = clave.replace('melamina_', '')
+            melaminaPrecios[nombre] = valor
+          } else if (clave.startsWith('tapacanto_')) {
+            const nombre = clave.replace('tapacanto_', '')
+            tapacantoPrecios[nombre] = valor
+          } else {
+            otrosPrecios[clave] = valor
+          }
+        })
+        const nuevosPrecios = {
+          ...otrosPrecios,
+          melamina: melaminaPrecios,
+          tapacanto: tapacantoPrecios,
+        }
+        setPrecios(nuevosPrecios)
+        setPreciosDB(data.precios)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando precios:', error)
     }
-  } catch (error) {
-    console.error('❌ Error cargando colores:', error)
   }
-}
 
-
-  /* ════════════════════════════════════════════════════════════
-     HANDLERS
-     ════════════════════════════════════════════════════════════ */
+  const handleGuardarPreciosBD = async () => {
+    try {
+      if (precios.melamina) {
+        for (const [nombre, valor] of Object.entries(precios.melamina)) {
+          const clave = `melamina_${nombre}`
+          const valorNumerico = Number(valor) || 0
+          await fetch('/api/precios', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clave, valor: valorNumerico }),
+          })
+        }
+      }
+      if (precios.tapacanto) {
+        for (const [nombre, valor] of Object.entries(precios.tapacanto)) {
+          const clave = `tapacanto_${nombre}`
+          const valorNumerico = Number(valor) || 0
+          await fetch('/api/precios', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clave, valor: valorNumerico }),
+          })
+        }
+      }
+      const otrosPrecios = ['mdf9', 'mdf18', 'tornillos', 'manillas', 'ruedas', 'bisagras']
+      for (const clave of otrosPrecios) {
+        if (precios[clave] !== undefined) {
+          const valorNumerico = Number(precios[clave]) || 0
+          await fetch('/api/precios', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clave, valor: valorNumerico }),
+          })
+        }
+      }
+      alert('Precios actualizados en la BD')
+      await cargarPreciosDB()
+    } catch (err) {
+      console.error('❌ Error guardando precios:', err)
+      alert('❌ Error: ' + err.message)
+    }
+  }
 
   const handleLogin = async (user) => {
-  setCurrentUser(user)
-  setShowAuth(false)
-  localStorage.setItem('currentUser', JSON.stringify(user))
-  // Cargar datos solo si no están ya cargados
-  if (coloresDB.length === 0) {
+    setCurrentUser(user)
+    setShowAuth(false)
+    localStorage.setItem('currentUser', JSON.stringify(user))
+    await cargarCotizaciones()
     await cargarColoresDB()
-  }
-  if (Object.keys(precios).length === 0) {
     await cargarPreciosDB()
   }
-  await cargarCotizaciones()
-}
 
   const handleRegister = (nuevoUsuario) => {
     setCurrentUser(nuevoUsuario)
@@ -2243,177 +4359,126 @@ export default function App() {
   }
 
   const handleChangePassword = (nuevaPass) => {
-    setCurrentUser(prev => ({ ...prev, password: nuevaPass }))
+    setCurrentUser((prev) => ({ ...prev, password: nuevaPass }))
   }
 
   const handleResetPassword = (email, nuevaPass) => {
-    // Actualizar contraseña vía API
     fetch('/api/clientes/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: '' })
+      body: JSON.stringify({ email, password: '' }),
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.cliente) {
-        fetch(`/api/clientes/${data.cliente.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ newPassword: nuevaPass })
-        })
-      }
-    })
-    .catch(console.error)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.cliente) {
+          fetch(`/api/clientes/${data.cliente.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newPassword: nuevaPass }),
+          })
+        }
+      })
+      .catch(console.error)
   }
 
   const handleUpdatePrecio = (tipo, nombre, valor) => {
-  console.log(`🔄 Actualizando ${tipo} - ${nombre}: ${valor}`)
-  
-  if (tipo === 'melamina' && nombre) {
-    setPrecios(prev => {
-      const nuevosPrecios = {
+    if (tipo === 'melamina' && nombre) {
+      setPrecios((prev) => ({
         ...prev,
         melamina: {
           ...prev.melamina,
-          [nombre]: Number(valor) || 0
-        }
-      }
-      console.log('✅ Nuevos precios melamina:', nuevosPrecios.melamina)
-      return nuevosPrecios
-    })
-  } else if (tipo === 'tapacanto' && nombre) {
-    setPrecios(prev => ({
-      ...prev,
-      tapacanto: {
-        ...prev.tapacanto,
-        [nombre]: Number(valor) || 0
-      }
-    }))
-  } else {
-    setPrecios(prev => ({
-      ...prev,
-      [tipo]: Number(valor) || 0
-    }))
+          [nombre]: valor,
+        },
+      }))
+    } else if (tipo === 'tapacanto' && nombre) {
+      setPrecios((prev) => ({
+        ...prev,
+        tapacanto: {
+          ...prev.tapacanto,
+          [nombre]: valor,
+        },
+      }))
+    } else {
+      setPrecios((prev) => ({
+        ...prev,
+        [tipo]: valor,
+      }))
+    }
   }
-}
-
-  const handleGuardarPreciosBD = async () => {
-  try {
-    console.log('💾 Guardando precios en BD...')
-    
-    // 1️⃣ Guardar en tabla colores (campo melamina)
-    if (precios.melamina) {
-      for (const [nombre, valor] of Object.entries(precios.melamina)) {
-        const valorNumerico = Number(valor) || 0
-        
-        // Actualizar el campo melamina en la tabla colores
-        const { error } = await supabaseAdmin
-          .from('colores')
-          .update({ melamina: valorNumerico })
-          .eq('nombre', nombre)
-        
-        if (error) {
-          console.error(`❌ Error actualizando ${nombre}:`, error)
-        } else {
-          console.log(`  ✅ Actualizado ${nombre}: ${valorNumerico}`)
-        }
-      }
-    }
-    
-    // 2️⃣ También guardar en precios_generales para compatibilidad
-    if (precios.melamina) {
-      for (const [nombre, valor] of Object.entries(precios.melamina)) {
-        const clave = `melamina_${nombre}`
-        const valorNumerico = Number(valor) || 0
-        
-        await fetch('/api/precios', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            clave: clave, 
-            valor: valorNumerico 
-          })
-        })
-      }
-    }
-    
-    // 3️⃣ Guardar otros precios
-    const otrosPrecios = ['mdf9', 'mdf18', 'tornillos', 'manillas', 'ruedas', 'bisagras']
-    for (const clave of otrosPrecios) {
-      if (precios[clave] !== undefined) {
-        const valorNumerico = Number(precios[clave]) || 0
-        await fetch('/api/precios', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            clave: clave, 
-            valor: valorNumerico 
-          })
-        })
-      }
-    }
-    
-    console.log('✅ Precios guardados correctamente')
-    alert('✅ Precios actualizados en la BD')
-    
-    // Recargar datos para confirmar
-    await cargarColoresDB(true)
-    await cargarPreciosDB()
-    
-  } catch (err) {
-    console.error('❌ Error guardando precios:', err)
-    alert('❌ Error: ' + err.message)
-  }
-}
 
   function handleCotizar() {
-    if (!currentUser) { setShowAuth(true); return }
+    if (!currentUser) {
+      setShowAuth(true)
+      return
+    }
     setShowCotizar(true)
   }
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser')
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser)
+        setCurrentUser(user)
+        setTimeout(() => {
+          cargarCotizaciones()
+          cargarColoresDB()
+          cargarPreciosDB()
+        }, 100)
+      } catch (e) {
+        console.error('Error al restaurar sesión:', e)
+      }
+    }
+  }, [])
 
   const navProps = {
     currentUser,
     onShowAuth: () => setShowAuth(true),
     onLogout: handleLogout,
     onGoHome: () => setPage('home'),
-    onGoPerfil: () => { setClientePanel('perfil'); setPage('cliente') },
-    onGoPedidos: () => { setClientePanel('pedidos'); setPage('cliente') },
-    onGoAdmin: () => { if (currentUser?.is_admin) setPage('admin') },
+    onGoPerfil: () => {
+      setClientePanel('perfil')
+      setPage('cliente')
+    },
+    onGoPedidos: () => {
+      setClientePanel('pedidos')
+      setPage('cliente')
+    },
+    onGoAdmin: () => {
+      if (currentUser?.is_admin) setPage('admin')
+    },
   }
 
   return (
     <div className="shell">
-      {page === 'home' && (
-        <PageHome {...navProps} onCotizar={handleCotizar} />
-      )}
+      {page === 'home' && <PageHome {...navProps} onCotizar={handleCotizar} />}
       {page === 'cliente' && currentUser && (
-        <PageCliente 
-          currentUser={currentUser} 
-          cotizaciones={cotizaciones} 
-          onBack={() => setPage('home')} 
-          onSendMsg={handleSendMsg} 
+        <PageCliente
+          currentUser={currentUser}
+          cotizaciones={cotizaciones}
+          onBack={() => setPage('home')}
+          onSendMsg={handleSendMsg}
           initialPanel={clientePanel}
-          onUpdateProfile={handleUpdateProfile} 
-          onChangePassword={handleChangePassword} 
+          onUpdateProfile={handleUpdateProfile}
+          onChangePassword={handleChangePassword}
         />
       )}
       {page === 'admin' && currentUser?.is_admin && (
         <PageAdmin
-          cotizaciones={cotizaciones} 
-          clientes={clientes} 
+          cotizaciones={cotizaciones}
           precios={precios}
-          coloresDB={coloresDB}           
+          coloresDB={coloresDB}
+          cargarCotizaciones={cargarCotizaciones}
           cargarColoresDB={cargarColoresDB}
-          onBack={() => setPage('home')} 
+          cargarPreciosDB={cargarPreciosDB}
+          handleGuardarPreciosBD={handleGuardarPreciosBD}
+          onBack={() => setPage('home')}
           onChangeEstado={handleChangeEstado}
-          onSendMsg={handleSendMsg} 
+          onSendMsg={handleSendMsg}
           onToggleChat={handleToggleChat}
-          onDeleteCot={handleDeleteCot} 
+          onDeleteCot={handleDeleteCot}
           onAceptar={handleAceptar}
           onUpdatePrecio={handleUpdatePrecio}
-          handleGuardarPreciosBD={handleGuardarPreciosBD}
-          cargarPreciosDB={cargarPreciosDB} 
-
         />
       )}
       {showCotizar && currentUser && (
@@ -2421,15 +4486,17 @@ export default function App() {
           currentUser={currentUser}
           onClose={() => setShowCotizar(false)}
           onSubmit={handleSubmitCot}
+          coloresDB={coloresDB}
         />
       )}
-      {showAuth && <ModalAuth
-        onClose={() => setShowAuth(false)}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
-        onResetPassword={handleResetPassword}
-        clientes={clientes}
-      />}
+      {showAuth && (
+        <ModalAuth
+          onClose={() => setShowAuth(false)}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+          onResetPassword={handleResetPassword}
+        />
+      )}
       <FooterContacto />
     </div>
   )

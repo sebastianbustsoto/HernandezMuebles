@@ -1,5 +1,31 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
+export async function GET(req, { params }) {
+  try {
+    const { id } = params
+    const { data, error } = await supabaseAdmin
+      .from('cotizaciones')
+      .select(`
+        *,
+        clientes (
+          id,
+          nombres,
+          apellidos,
+          email,
+          telefono
+        )
+      `)
+      .eq('id', parseInt(id))
+      .single()
+
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    if (!data) return Response.json({ error: 'Cotización no encontrada' }, { status: 404 })
+    return Response.json({ cotizacion: data })
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 })
+  }
+}
+
 export async function PATCH(req, { params }) {
   try {
     const { id } = params

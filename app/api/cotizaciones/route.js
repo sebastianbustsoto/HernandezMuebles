@@ -5,7 +5,16 @@ export async function GET(req) {
     const url = new URL(req.url)
     const clienteId = url.searchParams.get('clienteId')
 
-    let query = supabaseAdmin.from('cotizaciones').select('*').order('fecha', { ascending: false })
+    let query = supabaseAdmin.from('cotizaciones').select(`
+      *,
+      clientes (
+        id,
+        nombres,
+        apellidos,
+        email,
+        telefono
+      )
+    `).order('fecha', { ascending: false })
 
     if (clienteId) {
       query = query.eq('cliente_id', parseInt(clienteId))
@@ -22,7 +31,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json()
-    const { cliente_id, tipo_id, ancho, alto, prof, material, color, color_hex, color_textura, color_grain, descripcion, adjunto_url } = body
+    const { cliente_id, tipo_id, ancho, alto, prof, material, color, color_hex, color_textura, color_grain, descripcion, adjunto_url, tipo_otro, diseno_titulo } = body
 
     const { data, error } = await supabaseAdmin
       .from('cotizaciones')
@@ -38,7 +47,9 @@ export async function POST(req) {
         color_textura: color_textura || '',
         color_grain: color_grain || '',
         descripcion: descripcion || '',
-        adjunto_url: adjunto_url,
+        adjunto_url: adjunto_url || '',
+        tipo_otro: tipo_otro || '',
+        diseno_titulo: diseno_titulo || '',
         etapa_id: 1
       })
       .select()
