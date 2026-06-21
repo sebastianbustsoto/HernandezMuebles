@@ -1,23 +1,26 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-// GET /api/precios — listar todos los precios generales
+// GET /api/precios
 export async function GET(req) {
-  const { data, error } = await supabaseAdmin
-    .from('precios_generales')
-    .select('*')
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('precios_generales')
+      .select('*')
 
-  if (error) return Response.json({ error: error.message }, { status: 500 })
+    if (error) return Response.json({ error: error.message }, { status: 500 })
 
-  // Transformar array de {clave, valor} a un objeto {clave: valor}
-  const precios = {}
-  data?.forEach(item => {
-    precios[item.clave] = item.valor
-  })
+    const precios = {}
+    data?.forEach(item => {
+      precios[item.clave] = item.valor
+    })
 
-  return Response.json({ precios })
+    return Response.json({ precios })
+  } catch (err) {
+    return Response.json({ error: 'Error al obtener precios' }, { status: 500 })
+  }
 }
 
-// PATCH /api/precios — actualizar un precio
+// PATCH /api/precios
 export async function PATCH(req) {
   const { clave, valor } = await req.json()
 
@@ -25,13 +28,17 @@ export async function PATCH(req) {
     return Response.json({ error: 'Clave y valor son requeridos' }, { status: 400 })
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('precios_generales')
-    .update({ valor: parseInt(valor) })
-    .eq('clave', clave)
-    .select()
-    .single()
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('precios_generales')
+      .update({ valor: parseInt(valor) })
+      .eq('clave', clave)
+      .select()
+      .single()
 
-  if (error) return Response.json({ error: error.message }, { status: 500 })
-  return Response.json({ precio: data })
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json({ precio: data })
+  } catch (err) {
+    return Response.json({ error: 'Error al actualizar precio' }, { status: 500 })
+  }
 }

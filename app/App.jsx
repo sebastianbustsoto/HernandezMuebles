@@ -8,28 +8,25 @@ import emailjs from '@emailjs/browser'
    https://www.emailjs.com/
    ════════════════════════════════════════════════════════════ */
 const EMAILJS_SERVICE_ID = 'service_43d4j75'
-const EMAILJS_PUBLIC_KEY = 'yez38Ag9rM1ry57VY'
+const EMAILJS_PUBLIC_KEY = 'lx2bES33rJekDrTgj'
 
-// Plantilla A — códigos OTP (registro y recuperar contraseña)
-// Basada en "One-Time Password" de EmailJS: usa {{passcode}}, {{time}}, {{email}}
-const EMAILJS_TEMPLATE_OTP = 'lx2bES33rJekDrTgj'
+// Una sola plantilla OTP para registro Y recuperar contraseña
+const EMAILJS_TEMPLATE_OTP = 'template_kh42o2m'
 
-// Plantilla B — correos transaccionales con texto libre (cotización/presupuesto
-// y confirmación de pedido). Plantilla simple: Subject = {{subject}}, To Email =
-// {{to_email}}, Content = {{message}}
-const EMAILJS_TEMPLATE_GENERAL = 'template_4oi6jej'
+// Plantilla para cotizaciones y confirmaciones
+const EMAILJS_TEMPLATE_TRANSACCIONAL = 'template_4oi6jej'
 
-// Alias para mantener compatibilidad con el resto del código
+// Alias para mantener compatibilidad
 const EMAILJS_TEMPLATE_REGISTRO     = EMAILJS_TEMPLATE_OTP
 const EMAILJS_TEMPLATE_RECUPERAR    = EMAILJS_TEMPLATE_OTP
-const EMAILJS_TEMPLATE_COTIZACION   = EMAILJS_TEMPLATE_GENERAL
-const EMAILJS_TEMPLATE_CONFIRMACION = EMAILJS_TEMPLATE_GENERAL
+const EMAILJS_TEMPLATE_COTIZACION   = EMAILJS_TEMPLATE_TRANSACCIONAL
+const EMAILJS_TEMPLATE_CONFIRMACION = EMAILJS_TEMPLATE_TRANSACCIONAL
 
 /* ════════════════════════════════════════════════════════════
    DATOS GLOBALES / CONSTANTES
    ════════════════════════════════════════════════════════════ */
 
-const ADMIN_EMAIL    = 'josehernandezmuebles@gmail.com'
+const ADMIN_EMAIL    = 'joserhernandezmuebles@gmail.com'
 const ADMIN_PASSWORD = '1234'
 
 const ETAPAS = ['cotización', 'fabricación', 'entrega', 'entregado']
@@ -465,7 +462,7 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     setOtpErr('')
     setSending(true)
     try {
-      if (EMAILJS_TEMPLATE_REGISTRO !== 'template_kh42o2m') {
+      if (EMAILJS_TEMPLATE_REGISTRO !== 'TU_TEMPLATE_REGISTRO') {
         await emailjs.send(
           EMAILJS_SERVICE_ID,
           EMAILJS_TEMPLATE_REGISTRO,
@@ -548,7 +545,7 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword, clientes }) 
     setForgotOtpInputs(['', '', '', '', '', ''])
     setForgotSending(true)
     try {
-      if (EMAILJS_TEMPLATE_RECUPERAR !== 'template_kh42o2m') {
+      if (EMAILJS_TEMPLATE_RECUPERAR !== 'TU_TEMPLATE_RECUPERAR') {
         await emailjs.send(
           EMAILJS_SERVICE_ID,
           EMAILJS_TEMPLATE_RECUPERAR,
@@ -781,7 +778,7 @@ function Nav({ currentUser, onShowAuth, onLogout, onGoHome, onGoPerfil, onGoPedi
         <span style={{ fontSize: 26, fontWeight: 800 }}>Hernández Muebles</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-        <span onClick={() => window.open('mailto:joserhernandezmuebles@gmail.com')} style={{ textDecoration: 'none', color: '#2a2a2a', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Contacto</span>
+        <span style={{ fontSize: 14, color: 'rgba(42,42,42,.4)' }}>•</span>
         {!currentUser
           ? <Btn outline onClick={onShowAuth}><span style={{ fontSize: 18 }}>👤</span> Iniciar sesión</Btn>
           : (
@@ -1389,7 +1386,7 @@ function PageAdmin({ cotizaciones, clientes, precios, onBack, onChangeEstado, on
 
   async function sendEmail() {
     if (!cot || !emailDraft.trim()) return
-    if (EMAILJS_TEMPLATE_COTIZACION === 'template_4oi6jej') {
+    if (EMAILJS_TEMPLATE_COTIZACION === 'TU_TEMPLATE_GENERAL') {
       alert('⚠️ Configura EMAILJS_TEMPLATE_GENERAL en App.jsx antes de enviar correos.\nCrea una plantilla en EmailJS (Subject={{subject}}, To Email={{to_email}}, Content={{message}}) y reemplaza la constante al inicio del archivo.')
       return
     }
@@ -1422,7 +1419,7 @@ function PageAdmin({ cotizaciones, clientes, precios, onBack, onChangeEstado, on
   // Correo de confirmación de pedido (formato tipo "Order Confirmation", en texto plano)
   async function sendConfirmacionPedido() {
     if (!cot) return
-    if (EMAILJS_TEMPLATE_CONFIRMACION === 'template_4oi6jej') {
+    if (EMAILJS_TEMPLATE_CONFIRMACION === 'TU_TEMPLATE_GENERAL') {
       alert('⚠️ Configura EMAILJS_TEMPLATE_GENERAL en App.jsx antes de enviar correos.\nCrea una plantilla en EmailJS (Subject={{subject}}, To Email={{to_email}}, Content={{message}}) y reemplaza la constante al inicio del archivo.')
       return
     }
