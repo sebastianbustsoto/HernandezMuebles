@@ -2107,7 +2107,6 @@ function PageAdmin({
   precios,
   coloresDB = [],
   cargarCotizaciones,
-  cargarMensajes,
   cargarColoresDB,
   cargarPreciosDB,
   handleGuardarPreciosBD,
@@ -2146,7 +2145,14 @@ function PageAdmin({
   const [matMano, setMatMano] = useState(0)
   const [extras, setExtras] = useState([])
 
-  const cargandoCotizacionesRef = useRef(false)
+  useEffect(() => {
+    if (section === 'precios' && cargarColoresDB) {
+      cargarColoresDB()
+    }
+    if ((section === 'cotizaciones' || section === 'gestionar' || section === 'chat') && cargarCotizaciones) {
+      cargarCotizaciones()
+    }
+  }, [section, cargarColoresDB, cargarCotizaciones])
 
   const filtered = cotizaciones.filter((q) => {
     if (filter === 'cotización') return q.estado === 'cotización'
@@ -2162,30 +2168,6 @@ function PageAdmin({
   })
 
   const cot = cotizaciones.find((c) => c.id === selectedId)
-
-  useEffect(() => {
-    if (selectedId && cargarMensajes) {
-      cargarMensajes(selectedId)
-    }
-  }, [selectedId, cargarMensajes])
-
-  useEffect(() => {
-    if (section === 'precios' && cargarColoresDB) {
-      cargarColoresDB()
-    }
-  }, [section, cargarColoresDB])
-
-  useEffect(() => {
-    if ((section === 'cotizaciones' || section === 'gestionar' || section === 'chat') && cargarCotizaciones) {
-      if (!cargandoCotizacionesRef.current) {
-        cargandoCotizacionesRef.current = true
-        cargarCotizaciones()
-        setTimeout(() => {
-          cargandoCotizacionesRef.current = false
-        }, 2000)
-      }
-    }
-  }, [section, cargarCotizaciones])
 
   const SideBtn = ({ id, icon, label }) => (
     <button
@@ -2329,43 +2311,43 @@ function PageAdmin({
   }
 
   async function enviarCorreoPresupuesto() {
-    const q = cotizaciones.find(c => String(c.id) === calcCotId)
-    if (!q) {
-      alert('Primero selecciona una cotización')
-      return
-    }
-
-    const emailDraft = generarCorreoPresupuesto()
-    if (!emailDraft || !emailDraft.trim()) return
-
-    setEmailSending(true)
-    setEmailStatus(null)
-
-    try {
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_CONFIRMACION,
-        {
-          to_name: q.nombre,
-          to_email: q.email,
-          from_name: 'Hernández Muebles',
-          reply_to: ADMIN_EMAIL,
-          subject: `Presupuesto ${q.código} — Hernández Muebles`,
-          message: emailDraft,
-          codigo: q.código,
-        },
-        EMAILJS_PUBLIC_KEY
-      )
-      setEmailStatus('ok')
-      alert(`✅ Presupuesto enviado a ${q.email}`)
-    } catch (err) {
-      console.error('EmailJS error:', err)
-      setEmailStatus('error')
-      alert('❌ Error al enviar el correo. Revisa tus credenciales de EmailJS.')
-    } finally {
-      setEmailSending(false)
-    }
+  const q = cotizaciones.find(c => String(c.id) === calcCotId)
+  if (!q) {
+    alert('Primero selecciona una cotización')
+    return
   }
+
+  const emailDraft = generarCorreoPresupuesto()
+  if (!emailDraft || !emailDraft.trim()) return
+
+  setEmailSending(true)
+  setEmailStatus(null)
+
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_CONFIRMACION,  
+      {
+        to_name: q.nombre,
+        to_email: q.email,
+        from_name: 'Hernández Muebles',
+        reply_to: ADMIN_EMAIL,
+        subject: `Presupuesto ${q.código} — Hernández Muebles`,
+        message: emailDraft,
+        codigo: q.código,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+    setEmailStatus('ok')
+    alert(`✅ Presupuesto enviado a ${q.email}`)
+  } catch (err) {
+    console.error('EmailJS error:', err)
+    setEmailStatus('error')
+    alert('❌ Error al enviar el correo. Revisa tus credenciales de EmailJS.')
+  } finally {
+    setEmailSending(false)
+  }
+}
 
   function calcTotal() {
     const melP = matMelTipo ? precios.melamina?.[matMelTipo] || 0 : 0
@@ -3955,5 +3937,576 @@ function PageAdmin({
         </div>
       </div>
     </Card>
+  )
+}
+
+function FooterContacto() {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: 18,
+        right: 18,
+        bottom: 14,
+        zIndex: 60,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        pointerEvents: 'none',
+      }}
+    >
+      <span
+        style={{
+          color: '#333',
+          fontSize: 12,
+          fontWeight: 600,
+          textShadow: '0 1px 3px rgba(255,255,255,.8)',
+          userSelect: 'none',
+        }}
+      >
+        © 2025 Hernández Muebles
+      </span>
+      <a
+        href="mailto:joserhernandezmuebles@gmail.com"
+        style={{
+          pointerEvents: 'all',
+          background: 'rgba(255,255,255,.82)',
+          border: '1.5px solid rgba(26,26,26,.4)',
+          borderRadius: 999,
+          padding: '7px 16px',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 700,
+          color: '#222222',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          backdropFilter: 'blur(6px)',
+          boxShadow: '0 2px 8px rgba(0,0,0,.1)',
+          textDecoration: 'none',
+        }}
+      >
+        Contacto
+      </a>
+    </div>
+  )
+}
+
+export default function App() {
+  const [page, setPage] = useState('home')
+  const [clientePanel, setClientePanel] = useState('perfil')
+  const [currentUser, setCurrentUser] = useState(null)
+  const [cotizaciones, setCotizaciones] = useState([])
+  const [coloresDB, setColoresDB] = useState([])
+  const [preciosDB, setPreciosDB] = useState({})
+  const [precios, setPrecios] = useState({})
+  const [cargando, setCargando] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [showCotizar, setShowCotizar] = useState(false)
+
+  async function cargarCotizaciones() {
+  if (!currentUser) return
+  if (cargando) return
+  
+  try {
+    setCargando(true)
+    const url = currentUser.is_admin
+      ? '/api/cotizaciones'
+      : `/api/cotizaciones?clienteId=${currentUser.id}`
+    const res = await fetch(url)
+    const data = await res.json()
+    
+    if (data.cotizaciones) {
+      const etapas = ['cotización', 'fabricación', 'entrega', 'entregado']
+      const tipos = ['Escritorio', 'Cocina', 'Baño', 'Otro']
+      const formateadas = await Promise.all(
+        data.cotizaciones.map(async (c) => {
+          let mensajes = []
+          let clienteData = null
+          
+          try {
+            const mensajesRes = await fetch(`/api/cotizaciones/${c.id}/mensajes`)
+            const mensajesData = await mensajesRes.json()
+            mensajes = mensajesData.mensajes || []
+          } catch (e) {
+            console.warn('Error cargando mensajes:', e)
+          }
+
+          try {
+            if (c.cliente_id) {
+              const clienteRes = await fetch(`/api/clientes/${c.cliente_id}`)
+              const clienteJson = await clienteRes.json()
+              clienteData = clienteJson.cliente
+            }
+          } catch (e) {
+            console.warn('Error cargando cliente:', e)
+          }
+
+          return {
+            id: c.id,
+            código: c.codigo,
+            estado: etapas[c.etapa_id - 1] || 'cotización',
+            clienteEmail: c.cliente_id,
+            nombre: clienteData?.nombres + ' ' + clienteData?.apellidos || c.clientes?.nombres + ' ' + c.clientes?.apellidos || 'Cliente',
+            email: clienteData?.email || c.clientes?.email || '',
+            número: clienteData?.telefono || c.clientes?.telefono || '',
+            tipo: c.tipo_otro || tipos[c.tipo_id - 1] || '',
+            tipoOtro: c.tipo_otro || '',
+            diseñoId: '',
+            diseñoTitulo: c.diseno_titulo || '',
+            dim: { ancho: c.ancho, alto: c.alto, prof: c.prof },
+            material: c.material || '--',
+            color: c.color || '--',
+            colorHex: c.color_hex || '',
+            colorTextura: c.color_textura || '',
+            colorGrain: c.color_grain || '',
+            descripción: c.descripcion || '',
+            adjunto: null,
+            adjuntoBase64: c.adjunto_url || null,
+            fecha: new Date(c.fecha).toLocaleString('es-CL'),
+            mensajes: mensajes,
+            chatCerrado: c.chat_cerrado || false,
+          }
+        })
+      )
+      setCotizaciones(formateadas)
+    }
+  } catch (error) {
+    console.error('❌ Error cargando cotizaciones:', error)
+  } finally {
+    setCargando(false)
+  }
+}
+
+  async function subirImagen(base64, codigo) {
+    try {
+      const res = await fetch(base64)
+      const blob = await res.blob()
+      const formData = new FormData()
+      const extension = blob.type === 'image/png' ? 'png' : 'jpg'
+      formData.append('file', blob, `cotizacion_${codigo}.${extension}`)
+      const uploadRes = await fetch('/api/storage/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await uploadRes.json()
+      return data.url || ''
+    } catch (error) {
+      console.error('Error subiendo imagen:', error)
+      return ''
+    }
+  }
+
+  async function crearCotizacion(datos) {
+    if (!currentUser) throw new Error('Usuario no autenticado')
+    try {
+      const tiposMap = { Escritorio: 1, Cocina: 2, Baño: 3, Otro: 4 }
+      const tipoId = tiposMap[datos.tipo] || 4
+      let adjuntoUrl = ''
+      if (datos.adjuntoBase64) {
+        adjuntoUrl = await subirImagen(datos.adjuntoBase64, datos.código)
+      }
+      const payload = {
+        cliente_id: currentUser.id,
+        tipo_id: tipoId,
+        ancho: parseInt(datos.dim.ancho) || 0,
+        alto: parseInt(datos.dim.alto) || 0,
+        prof: parseInt(datos.dim.prof) || 0,
+        material: datos.material || '',
+        color: datos.color || '',
+        color_hex: datos.colorHex || '',
+        color_textura: datos.colorTextura || '',
+        color_grain: datos.colorGrain || '',
+        descripcion: datos.descripción || '',
+        adjunto_url: adjuntoUrl,
+        tipo_otro: datos.tipoOtro || '',
+        diseno_titulo: datos.diseñoTitulo || '',
+      }
+      const res = await fetch('/api/cotizaciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (data.cotizacion) {
+        await cargarCotizaciones()
+        return data.cotizacion
+      }
+      throw new Error(data.error || 'Error al crear cotización')
+    } catch (error) {
+      console.error('Error:', error)
+      throw error
+    }
+  }
+
+  async function enviarMensaje(cotizacionId, texto, autor) {
+    if (!texto.trim()) return
+    try {
+      const res = await fetch(`/api/cotizaciones/${cotizacionId}/mensajes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          autor: autor === 'admin' ? 'admin' : 'cliente',
+          texto: texto.trim(),
+        }),
+      })
+      const data = await res.json()
+      if (data.mensaje) {
+        await cargarCotizaciones()
+      }
+    } catch (error) {
+      console.error('Error enviando mensaje:', error)
+    }
+  }
+
+  async function actualizarEtapa(cotizacionId, etapa) {
+    try {
+      const etapasMap = { cotización: 1, fabricación: 2, entrega: 3, entregado: 4 }
+      const etapaId = etapasMap[etapa] || 1
+      const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ etapa_id: etapaId }),
+      })
+      const data = await res.json()
+      if (data.cotizacion) {
+        await cargarCotizaciones()
+      }
+    } catch (error) {
+      console.error('Error actualizando etapa:', error)
+    }
+  }
+
+  async function actualizarChat(cotizacionId, cerrado) {
+  try {
+    const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_cerrado: cerrado }),
+    })
+    const data = await res.json()
+    if (data.cotizacion) {
+      await cargarCotizaciones()
+    }
+  } catch (error) {
+    console.error('Error actualizando chat:', error)
+  }
+}
+
+  async function eliminarCotizacion(cotizacionId) {
+    if (!confirm('¿Eliminar esta cotización?')) return
+    try {
+      const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (data.success) {
+        await cargarCotizaciones()
+      }
+    } catch (error) {
+      console.error('Error eliminando cotización:', error)
+    }
+  }
+
+  async function cargarColoresDB(forzar = false) {
+    if (coloresDB.length > 0 && !forzar) {
+      return
+    }
+    try {
+      const res = await fetch('/api/colores')
+      const data = await res.json()
+      if (data.colores && data.colores.length > 0) {
+        setColoresDB(data.colores)
+        const preciosMelamina = {}
+        data.colores.forEach((color) => {
+          preciosMelamina[color.nombre] = color.melamina || 0
+        })
+        setPrecios((prev) => ({
+          ...prev,
+          melamina: preciosMelamina,
+        }))
+      }
+    } catch (error) {
+      console.error('❌ Error cargando colores:', error)
+    }
+  }
+
+  async function cargarPreciosDB() {
+    try {
+      const res = await fetch('/api/precios')
+      const data = await res.json()
+      if (data.precios) {
+        const melaminaPrecios = {}
+        const tapacantoPrecios = {}
+        const otrosPrecios = {}
+        Object.keys(data.precios).forEach((clave) => {
+          const valor = data.precios[clave]
+          if (clave.startsWith('melamina_')) {
+            const nombre = clave.replace('melamina_', '')
+            melaminaPrecios[nombre] = valor
+          } else if (clave.startsWith('tapacanto_')) {
+            const nombre = clave.replace('tapacanto_', '')
+            tapacantoPrecios[nombre] = valor
+          } else {
+            otrosPrecios[clave] = valor
+          }
+        })
+        const nuevosPrecios = {
+          ...otrosPrecios,
+          melamina: melaminaPrecios,
+          tapacanto: tapacantoPrecios,
+        }
+        setPrecios(nuevosPrecios)
+        setPreciosDB(data.precios)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando precios:', error)
+    }
+  }
+
+  const handleGuardarPreciosBD = async () => {
+    try {
+      if (precios.melamina) {
+        for (const [nombre, valor] of Object.entries(precios.melamina)) {
+          const clave = `melamina_${nombre}`
+          const valorNumerico = Number(valor) || 0
+          await fetch('/api/precios', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clave, valor: valorNumerico }),
+          })
+        }
+      }
+      if (precios.tapacanto) {
+        for (const [nombre, valor] of Object.entries(precios.tapacanto)) {
+          const clave = `tapacanto_${nombre}`
+          const valorNumerico = Number(valor) || 0
+          await fetch('/api/precios', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clave, valor: valorNumerico }),
+          })
+        }
+      }
+      const otrosPrecios = ['mdf9', 'mdf18', 'tornillos', 'manillas', 'ruedas', 'bisagras']
+      for (const clave of otrosPrecios) {
+        if (precios[clave] !== undefined) {
+          const valorNumerico = Number(precios[clave]) || 0
+          await fetch('/api/precios', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clave, valor: valorNumerico }),
+          })
+        }
+      }
+      alert('Precios actualizados en la BD')
+      await cargarPreciosDB()
+    } catch (err) {
+      console.error('❌ Error guardando precios:', err)
+      alert('❌ Error: ' + err.message)
+    }
+  }
+
+  const handleLogin = async (user) => {
+    setCurrentUser(user)
+    setShowAuth(false)
+    localStorage.setItem('currentUser', JSON.stringify(user))
+    await cargarCotizaciones()
+    await cargarColoresDB()
+    await cargarPreciosDB()
+  }
+
+  const handleRegister = (nuevoUsuario) => {
+    setCurrentUser(nuevoUsuario)
+    setShowAuth(false)
+    localStorage.setItem('currentUser', JSON.stringify(nuevoUsuario))
+    cargarCotizaciones()
+    cargarColoresDB()
+    cargarPreciosDB()
+  }
+
+  const handleLogout = () => {
+    setCurrentUser(null)
+    setPage('home')
+    setCotizaciones([])
+    localStorage.removeItem('currentUser')
+  }
+
+  const handleSubmitCot = async (nueva) => {
+    try {
+      await crearCotizacion(nueva)
+      setShowCotizar(false)
+    } catch (error) {
+      alert('Error al crear cotización: ' + error.message)
+    }
+  }
+
+  const handleChangeEstado = async (id, estado) => {
+    await actualizarEtapa(id, estado)
+  }
+
+  const handleSendMsg = async (id, texto, autor) => {
+    await enviarMensaje(id, texto, autor)
+  }
+
+  const handleToggleChat = async (id, cerrar) => {
+    await actualizarChat(id, cerrar)
+  }
+
+  const handleDeleteCot = async (id) => {
+    await eliminarCotizacion(id)
+  }
+
+  const handleAceptar = async (id) => {
+    await actualizarEtapa(id, 'fabricación')
+    await enviarMensaje(id, 'Cotización aceptada. Pasando a fabricación.', 'admin')
+  }
+
+  const handleUpdateProfile = (datos) => {
+    setCurrentUser(datos)
+    localStorage.setItem('currentUser', JSON.stringify(datos))
+  }
+
+  const handleChangePassword = (nuevaPass) => {
+    setCurrentUser((prev) => ({ ...prev, password: nuevaPass }))
+  }
+
+  const handleResetPassword = (email, nuevaPass) => {
+    fetch('/api/clientes/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: '' }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.cliente) {
+          fetch(`/api/clientes/${data.cliente.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newPassword: nuevaPass }),
+          })
+        }
+      })
+      .catch(console.error)
+  }
+
+  const handleUpdatePrecio = (tipo, nombre, valor) => {
+    if (tipo === 'melamina' && nombre) {
+      setPrecios((prev) => ({
+        ...prev,
+        melamina: {
+          ...prev.melamina,
+          [nombre]: valor,
+        },
+      }))
+    } else if (tipo === 'tapacanto' && nombre) {
+      setPrecios((prev) => ({
+        ...prev,
+        tapacanto: {
+          ...prev.tapacanto,
+          [nombre]: valor,
+        },
+      }))
+    } else {
+      setPrecios((prev) => ({
+        ...prev,
+        [tipo]: valor,
+      }))
+    }
+  }
+
+  function handleCotizar() {
+    if (!currentUser) {
+      setShowAuth(true)
+      return
+    }
+    setShowCotizar(true)
+  }
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser')
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser)
+        setCurrentUser(user)
+        setTimeout(() => {
+          cargarCotizaciones()
+          cargarColoresDB()
+          cargarPreciosDB()
+        }, 100)
+      } catch (e) {
+        console.error('Error al restaurar sesión:', e)
+      }
+    }
+  }, [])
+
+  const navProps = {
+    currentUser,
+    onShowAuth: () => setShowAuth(true),
+    onLogout: handleLogout,
+    onGoHome: () => setPage('home'),
+    onGoPerfil: () => {
+      setClientePanel('perfil')
+      setPage('cliente')
+    },
+    onGoPedidos: () => {
+      setClientePanel('pedidos')
+      setPage('cliente')
+    },
+    onGoAdmin: () => {
+      if (currentUser?.is_admin) setPage('admin')
+    },
+  }
+
+  return (
+    <div className="shell">
+      {page === 'home' && <PageHome {...navProps} onCotizar={handleCotizar} />}
+      {page === 'cliente' && currentUser && (
+        <PageCliente
+          currentUser={currentUser}
+          cotizaciones={cotizaciones}
+          onBack={() => setPage('home')}
+          onSendMsg={handleSendMsg}
+          initialPanel={clientePanel}
+          onUpdateProfile={handleUpdateProfile}
+          onChangePassword={handleChangePassword}
+        />
+      )}
+      {page === 'admin' && currentUser?.is_admin && (
+        <PageAdmin
+          cotizaciones={cotizaciones}
+          precios={precios}
+          coloresDB={coloresDB}
+          cargarCotizaciones={cargarCotizaciones}
+          cargarColoresDB={cargarColoresDB}
+          cargarPreciosDB={cargarPreciosDB}
+          handleGuardarPreciosBD={handleGuardarPreciosBD}
+          onBack={() => setPage('home')}
+          onChangeEstado={handleChangeEstado}
+          onSendMsg={handleSendMsg}
+          onToggleChat={handleToggleChat}
+          onDeleteCot={handleDeleteCot}
+          onAceptar={handleAceptar}
+          onUpdatePrecio={handleUpdatePrecio}
+        />
+      )}
+      {showCotizar && currentUser && (
+        <ModalCotizar
+          currentUser={currentUser}
+          onClose={() => setShowCotizar(false)}
+          onSubmit={handleSubmitCot}
+          coloresDB={coloresDB}
+        />
+      )}
+      {showAuth && (
+        <ModalAuth
+          onClose={() => setShowAuth(false)}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+          onResetPassword={handleResetPassword}
+        />
+      )}
+      <FooterContacto />
+    </div>
   )
 }
