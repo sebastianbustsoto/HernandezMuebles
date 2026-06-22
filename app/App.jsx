@@ -2236,32 +2236,44 @@ function PageAdmin({
   }
 
   async function sendEmail() {
-    if (!cot || !emailDraft.trim()) return
-    setEmailSending(true)
-    setEmailStatus(null)
-    try {
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_COTIZACION,
-        {
-          to_name: cot.nombre,
-          to_email: cot.email,
-          from_name: 'Hernández Muebles',
-          reply_to: ADMIN_EMAIL,
-          subject: `Cotización ${cot.código} — Hernández Muebles`,
-          message: emailDraft,
-          codigo: cot.código,
-        },
-        EMAILJS_PUBLIC_KEY
-      )
-      setEmailStatus('ok')
-    } catch (err) {
-      console.error('EmailJS error:', err)
-      setEmailStatus('error')
-    } finally {
-      setEmailSending(false)
-    }
+  if (!cot || !emailDraft.trim()) return
+  
+  if (!cot.email || cot.email.trim() === '') {
+    alert('❌ El cliente no tiene un email registrado.')
+    return
   }
+  
+  setEmailSending(true)
+  setEmailStatus(null)
+  
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_COTIZACION,
+      {
+        to_name: cot.nombre || 'Cliente',
+        to_email: cot.email.trim(),
+        from_name: 'Hernández Muebles',
+        reply_to: ADMIN_EMAIL,
+        subject: `Cotización ${cot.código} — Hernández Muebles`,
+        message: emailDraft,
+        codigo: cot.código,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+    setEmailStatus('ok')
+    alert('✅ Correo enviado correctamente')
+  } catch (err) {
+    console.error('EmailJS error:', err)
+    if (err.status === 422) {
+      alert('❌ Error: El correo del cliente está vacío o es inválido.')
+    } else {
+      setEmailStatus('error')
+    }
+  } finally {
+    setEmailSending(false)
+  }
+}
 
   function generarCorreoPresupuesto() {
     const q = cotizaciones.find(c => String(c.id) === calcCotId)
@@ -2317,7 +2329,6 @@ function PageAdmin({
     return
   }
 
-  // ✅ VERIFICAR QUE EL EMAIL NO ESTÁ VACÍO
   if (!q.email || q.email.trim() === '') {
     alert('❌ El cliente no tiene un email registrado.')
     return
@@ -2335,7 +2346,7 @@ function PageAdmin({
       EMAILJS_TEMPLATE_CONFIRMACION,
       {
         to_name: q.nombre || 'Cliente',
-        to_email: q.email.trim(),  // ✅ Asegurar que tiene valor
+        to_email: q.email.trim(),  
         from_name: 'Hernández Muebles',
         reply_to: ADMIN_EMAIL,
         subject: `Presupuesto ${q.código} — Hernández Muebles`,
