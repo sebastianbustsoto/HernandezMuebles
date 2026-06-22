@@ -285,40 +285,47 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword }) {
   }
 
   async function sendVerificationCode() {
-    const code = generarOTP()
-    setOtpSent(code)
-    setOtpErr('')
-    setSending(true)
-    try {
-      if (EMAILJS_TEMPLATE_REGISTRO !== 'TU_TEMPLATE_REGISTRO') {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_REGISTRO,
-          {
-            passcode: code,
-            time: '15 minutos',
-            email: regEmail.trim().toLowerCase(),
-            to_name: regNombres.trim(),
-            to_email: regEmail.trim().toLowerCase(),
-            from_name: 'Hernández Muebles',
-            reply_to: ADMIN_EMAIL,
-            subject: 'Código de verificación — Hernández Muebles',
-            message: `Hola ${regNombres.trim()},\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para confirmar tu correo y activar tu cuenta.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
-            codigo: code,
-          },
-          EMAILJS_PUBLIC_KEY
-        )
-      } else {
-        console.warn('[EmailJS no configurado] Código de verificación:', code)
-        alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
-      }
-    } catch (err) {
-      console.error('EmailJS error:', err)
-    } finally {
-      setSending(false)
-      setResendCooldown(30)
-    }
+  const code = generarOTP()
+  setOtpSent(code)
+  setOtpErr('')
+  setSending(true)
+  
+  // ✅ LOGS PARA DEPURAR
+  console.log('📧 Enviando email con:')
+  console.log('  Service ID:', EMAILJS_SERVICE_ID)
+  console.log('  Template ID:', EMAILJS_TEMPLATE_REGISTRO)
+  console.log('  Public Key:', EMAILJS_PUBLIC_KEY)
+  console.log('  To:', regEmail.trim().toLowerCase())
+  console.log('  Code:', code)
+  
+  try {
+    const result = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_REGISTRO,
+      {
+        passcode: code,
+        time: '15 minutos',
+        email: regEmail.trim().toLowerCase(),
+        to_name: regNombres.trim(),
+        to_email: regEmail.trim().toLowerCase(),
+        from_name: 'Hernández Muebles',
+        reply_to: ADMIN_EMAIL,
+        subject: 'Código de verificación — Hernández Muebles',
+        message: `Hola ${regNombres.trim()},\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para confirmar tu correo y activar tu cuenta.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
+        codigo: code,
+      },
+      EMAILJS_PUBLIC_KEY
+    )
+    console.log('✅ EmailJS respuesta:', result)
+  } catch (err) {
+    console.error('❌ EmailJS error completo:', err)
+    console.error('  Status:', err.status)
+    console.error('  Text:', err.text)
+  } finally {
+    setSending(false)
+    setResendCooldown(30)
   }
+}
 
   async function doRegisterStart() {
     if (!validateRegFields()) return
