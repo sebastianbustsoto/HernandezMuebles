@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import emailjs from '@emailjs/browser'
 
-const EMAILJS_SERVICE_ID = 'service_23yygw2'
-const EMAILJS_PUBLIC_KEY = 'Q0uWNPkx9jZqdtmTU'
-const EMAILJS_TEMPLATE_OTP = 'template_bqfb7tf'
-const EMAILJS_TEMPLATE_TRANSACCIONAL = 'template_szq30sf'
+const EMAILJS_SERVICE_ID = 'service_82n65v6'
+const EMAILJS_PUBLIC_KEY = 'Hyot_ruuhQJIMaptd'
+const EMAILJS_TEMPLATE_OTP = 'template_8ijvacw'
+const EMAILJS_TEMPLATE_TRANSACCIONAL = 'template_fm6s7mu'
 
 const EMAILJS_TEMPLATE_COTIZACION = EMAILJS_TEMPLATE_TRANSACCIONAL
 const EMAILJS_TEMPLATE_CONFIRMACION = EMAILJS_TEMPLATE_TRANSACCIONAL
