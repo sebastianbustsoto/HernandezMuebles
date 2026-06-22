@@ -2107,6 +2107,7 @@ function PageAdmin({
   precios,
   coloresDB = [],
   cargarCotizaciones,
+  cargarMensajes,
   cargarColoresDB,
   cargarPreciosDB,
   handleGuardarPreciosBD,
@@ -2119,6 +2120,7 @@ function PageAdmin({
   onUpdatePrecio,
 }) {
   const [section, setSection] = useState('cotizaciones')
+  const cargandoCotizacionesRef = useRef(false)
   const [filter, setFilter] = useState('todos')
   const [chatFilter, setChatFilter] = useState('todos')
   const [selectedId, setSelectedId] = useState(cotizaciones[0]?.id || null)
@@ -2146,20 +2148,28 @@ function PageAdmin({
   const [extras, setExtras] = useState([])
 
   useEffect(() => {
+  if (selectedId && cargarMensajes) {
+    cargarMensajes(selectedId)
+  }
+}, [selectedId, cargarMensajes])
+
+    useEffect(() => {
     if (section === 'precios' && cargarColoresDB) {
       cargarColoresDB()
     }
-    if ((section === 'cotizaciones' || section === 'gestionar' || section === 'chat') && cargarCotizaciones) {
-      cargarCotizaciones()
-    }
-  }, [section, cargarColoresDB, cargarCotizaciones])
+  }, [section, cargarColoresDB])
 
-  const filtered = cotizaciones.filter((q) => {
-    if (filter === 'cotización') return q.estado === 'cotización'
-    if (filter === 'fabricación') return q.estado === 'fabricación'
-    if (filter === 'entregados') return q.estado === 'entregado'
-    return true
-  })
+  useEffect(() => {
+    if ((section === 'cotizaciones' || section === 'gestionar' || section === 'chat') && cargarCotizaciones) {
+      if (!cargandoCotizacionesRef.current) {
+        cargandoCotizacionesRef.current = true
+        cargarCotizaciones()
+        setTimeout(() => {
+          cargandoCotizacionesRef.current = false
+        }, 2000)
+      }
+    }
+  }, [section, cargarCotizaciones])
 
   const chatFiltered = cotizaciones.filter((q) => {
     if (chatFilter === 'fabricación') return q.estado === 'fabricación'
@@ -4006,6 +4016,8 @@ export default function App() {
 
   async function cargarCotizaciones() {
   if (!currentUser) return
+  if (cargando) return
+  
   try {
     setCargando(true)
     const url = currentUser.is_admin
@@ -4017,63 +4029,54 @@ export default function App() {
     if (data.cotizaciones) {
       const etapas = ['cotización', 'fabricación', 'entrega', 'entregado']
       const tipos = ['Escritorio', 'Cocina', 'Baño', 'Otro']
-      const formateadas = await Promise.all(
-        data.cotizaciones.map(async (c) => {
-          let mensajes = []
-          let clienteData = null
-          
-          try {
-            const mensajesRes = await fetch(`/api/cotizaciones/${c.id}/mensajes`)
-            const mensajesData = await mensajesRes.json()
-            mensajes = mensajesData.mensajes || []
-          } catch (e) {
-            console.warn('Error cargando mensajes:', e)
-          }
-
-          // Obtener cliente por separado si no viene en la cotización
-          try {
-            if (c.cliente_id) {
-              const clienteRes = await fetch(`/api/clientes/${c.cliente_id}`)
-              const clienteJson = await clienteRes.json()
-              clienteData = clienteJson.cliente
-            }
-          } catch (e) {
-            console.warn('Error cargando cliente:', e)
-          }
-
-          return {
-            id: c.id,
-            código: c.codigo,
-            estado: etapas[c.etapa_id - 1] || 'cotización',
-            clienteEmail: c.cliente_id,
-            nombre: clienteData?.nombres + ' ' + clienteData?.apellidos || c.clientes?.nombres + ' ' + c.clientes?.apellidos || 'Cliente',
-            email: clienteData?.email || c.clientes?.email || '',
-            número: clienteData?.telefono || c.clientes?.telefono || '',
-            tipo: c.tipo_otro || tipos[c.tipo_id - 1] || '',
-            tipoOtro: c.tipo_otro || '',
-            diseñoId: '',
-            diseñoTitulo: c.diseno_titulo || '',
-            dim: { ancho: c.ancho, alto: c.alto, prof: c.prof },
-            material: c.material || '--',
-            color: c.color || '--',
-            colorHex: c.color_hex || '',
-            colorTextura: c.color_textura || '',
-            colorGrain: c.color_grain || '',
-            descripción: c.descripcion || '',
-            adjunto: null,
-            adjuntoBase64: c.adjunto_url || null,
-            fecha: new Date(c.fecha).toLocaleString('es-CL'),
-            mensajes: mensajes,
-            chatCerrado: c.chat_cerrado || false,
-          }
-        })
-      )
+      
+      const formateadas = data.cotizaciones.map((c) => {
+        return {
+          id: c.id,
+          código: c.codigo,
+          estado: etapas[c.etapa_id - 1] || 'cotización',
+          clienteEmail: c.cliente_id,
+          nombre: c.clientes?.nombres + ' ' + c.clientes?.apellidos || 'Cliente',
+          email: c.clientes?.email || '',
+          número: c.clientes?.telefono || '',
+          tipo: c.tipo_otro || tipos[c.tipo_id - 1] || '',
+          tipoOtro: c.tipo_otro || '',
+          diseñoId: '',
+          diseñoTitulo: c.diseno_titulo || '',
+          dim: { ancho: c.ancho, alto: c.alto, prof: c.prof },
+          material: c.material || '--',
+          color: c.color || '--',
+          colorHex: c.color_hex || '',
+          colorTextura: c.color_textura || '',
+          colorGrain: c.color_grain || '',
+          descripción: c.descripcion || '',
+          adjunto: null,
+          adjuntoBase64: c.adjunto_url || null,
+          fecha: new Date(c.fecha).toLocaleString('es-CL'),
+          mensajes: [],
+          chatCerrado: c.chat_cerrado || false,
+        }
+      })
       setCotizaciones(formateadas)
     }
   } catch (error) {
     console.error('❌ Error cargando cotizaciones:', error)
   } finally {
     setCargando(false)
+  }
+}
+
+async function cargarMensajes(cotizacionId) {
+  try {
+    const res = await fetch(`/api/cotizaciones/${cotizacionId}/mensajes`)
+    const data = await res.json()
+    if (data.mensajes) {
+      setCotizaciones(prev => prev.map(c => 
+        c.id === cotizacionId ? { ...c, mensajes: data.mensajes } : c
+      ))
+    }
+  } catch (error) {
+    console.error('Error cargando mensajes:', error)
   }
 }
 
@@ -4477,6 +4480,7 @@ export default function App() {
           precios={precios}
           coloresDB={coloresDB}
           cargarCotizaciones={cargarCotizaciones}
+          cargarMensajes={cargarMensajes}
           cargarColoresDB={cargarColoresDB}
           cargarPreciosDB={cargarPreciosDB}
           handleGuardarPreciosBD={handleGuardarPreciosBD}
