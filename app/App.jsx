@@ -27,6 +27,7 @@ const ETAPA_COLOR = {
   entrega: '#7a4f9a',
   entregado: '#2e7d32',
 }
+const ADMIN_EMAIL = 'noreply.hernandezmuebles@gmail.com'
 
 const MDF_GROSORES = ['MDF melamínico 9 mm (Blanco)', 'MDF melamínico 18 mm (Blanco)']
 const TIPOS_MUEBLE = ['Escritorio', 'Cocina', 'Baño', 'Otro']
