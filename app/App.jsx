@@ -2317,6 +2317,12 @@ function PageAdmin({
     return
   }
 
+  // ✅ VERIFICAR QUE EL EMAIL NO ESTÁ VACÍO
+  if (!q.email || q.email.trim() === '') {
+    alert('❌ El cliente no tiene un email registrado.')
+    return
+  }
+
   const emailDraft = generarCorreoPresupuesto()
   if (!emailDraft || !emailDraft.trim()) return
 
@@ -2326,10 +2332,10 @@ function PageAdmin({
   try {
     await emailjs.send(
       EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_CONFIRMACION,  
+      EMAILJS_TEMPLATE_CONFIRMACION,
       {
-        to_name: q.nombre,
-        to_email: q.email,
+        to_name: q.nombre || 'Cliente',
+        to_email: q.email.trim(),  // ✅ Asegurar que tiene valor
         from_name: 'Hernández Muebles',
         reply_to: ADMIN_EMAIL,
         subject: `Presupuesto ${q.código} — Hernández Muebles`,
@@ -2342,8 +2348,12 @@ function PageAdmin({
     alert(`✅ Presupuesto enviado a ${q.email}`)
   } catch (err) {
     console.error('EmailJS error:', err)
-    setEmailStatus('error')
-    alert('❌ Error al enviar el correo. Revisa tus credenciales de EmailJS.')
+    if (err.status === 422) {
+      alert('❌ Error: El correo del cliente está vacío o es inválido.')
+    } else {
+      setEmailStatus('error')
+      alert('❌ Error al enviar el correo. Revisa tus credenciales de EmailJS.')
+    }
   } finally {
     setEmailSending(false)
   }
