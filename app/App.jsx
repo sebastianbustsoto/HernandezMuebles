@@ -1518,12 +1518,22 @@ function ModalCotizar({ currentUser, onClose, onSubmit, coloresDB = [] }) {
                       {dimsLabels.map(([key, label]) => (
                         <div className="cz-field" key={key}>
                           <label>{label} (cm)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={data[key]}
-                            onChange={(e) => set(key, e.target.value)}
-                            placeholder="0"
+                          <input 
+                            type="number" 
+                            min="1" 
+                            step="1"
+                            value={data[key]} 
+                            onChange={e => {
+                              const val = Number(e.target.value)
+                              if (val < 0) {
+                                setErr('Las medidas no pueden ser negativas.')
+                                set(key, '')
+                              } else {
+                                setErr('')
+                                set(key, e.target.value)
+                              }
+                            }} 
+                            placeholder="0" 
                           />
                         </div>
                       ))}
