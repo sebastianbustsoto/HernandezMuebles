@@ -12,6 +12,7 @@
     "@emailjs/browser": "^4.4.1",
     "@sparticuz/chromium": "^149.0.0",
     "@supabase/supabase-js": "^2.45.4",
+    "@vercel/speed-insights": "^2.0.0",
     "jspdf": "^4.2.1",
     "next": "^15.5.19",
     "pdfkit": "^0.19.0",
