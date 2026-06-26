@@ -6,13 +6,11 @@ export async function POST(req) {
 
     console.log('🔍 Buscando usuario por email:', email)
 
-    // ✅ Siempre buscar por email
     let query = supabaseAdmin
       .from('clientes')
       .select('*')
       .eq('email', email.toLowerCase().trim())
 
-    // ✅ Si hay password, validarlo
     if (password && password !== '') {
       query = query.eq('password', password)
     }
