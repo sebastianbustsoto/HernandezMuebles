@@ -13,11 +13,9 @@ export async function POST(req) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     
-    // Generar nombre único
     const timestamp = Date.now()
     const fileName = `cotizaciones/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
     
-    // Subir a Supabase Storage
     const { data, error } = await supabaseAdmin.storage
       .from('adjuntos')
       .upload(fileName, buffer, {
@@ -31,7 +29,6 @@ export async function POST(req) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Obtener URL pública
     const { data: urlData } = supabaseAdmin.storage
       .from('adjuntos')
       .getPublicUrl(fileName)

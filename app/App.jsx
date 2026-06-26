@@ -6,7 +6,7 @@ import emailjs from '@emailjs/browser'
 const EMAILJS_SERVICE_ID = 'service_82n65v6'
 const EMAILJS_PUBLIC_KEY = 'Hyot_ruuhQJIMaptd'
 const EMAILJS_TEMPLATE_OTP = 'template_kh42o2m'
-const EMAILJS_TEMPLATE_TRANSACCIONAL = 'template_4oi6jej'
+const EMAILJS_TEMPLATE_TRANSACCIONAL = 'template_sn62mg3'
 
 const EMAILJS_TEMPLATE_COTIZACION = EMAILJS_TEMPLATE_TRANSACCIONAL
 const EMAILJS_TEMPLATE_CONFIRMACION = EMAILJS_TEMPLATE_TRANSACCIONAL
@@ -27,10 +27,11 @@ const ETAPA_COLOR = {
   entrega: '#7a4f9a',
   entregado: '#2e7d32',
 }
-const ADMIN_EMAIL = 'noreply.hernandezmuebles@gmail.com'
 
 const MDF_GROSORES = ['MDF melamínico 9 mm (Blanco)', 'MDF melamínico 18 mm (Blanco)']
 const TIPOS_MUEBLE = ['Escritorio', 'Cocina', 'Baño', 'Otro']
+
+const IVA = 0.19
 
 function getSaludo() {
   const h = new Date().getHours()
@@ -285,47 +286,56 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword }) {
   }
 
   async function sendVerificationCode() {
-  const code = generarOTP()
-  setOtpSent(code)
-  setOtpErr('')
-  setSending(true)
-  
-  // ✅ LOGS PARA DEPURAR
-  console.log('📧 Enviando email con:')
-  console.log('  Service ID:', EMAILJS_SERVICE_ID)
-  console.log('  Template ID:', EMAILJS_TEMPLATE_REGISTRO)
-  console.log('  Public Key:', EMAILJS_PUBLIC_KEY)
-  console.log('  To:', regEmail.trim().toLowerCase())
-  console.log('  Code:', code)
-  
-  try {
-    const result = await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_REGISTRO,
-      {
-        passcode: code,
-        time: '15 minutos',
-        email: regEmail.trim().toLowerCase(),
-        to_name: regNombres.trim(),
-        to_email: regEmail.trim().toLowerCase(),
-        from_name: 'Hernández Muebles',
-        reply_to: ADMIN_EMAIL,
-        subject: 'Código de verificación — Hernández Muebles',
-        message: `Hola ${regNombres.trim()},\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para confirmar tu correo y activar tu cuenta.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
-        codigo: code,
-      },
-      EMAILJS_PUBLIC_KEY
-    )
-    console.log('✅ EmailJS respuesta:', result)
-  } catch (err) {
-    console.error('❌ EmailJS error completo:', err)
-    console.error('  Status:', err.status)
-    console.error('  Text:', err.text)
-  } finally {
-    setSending(false)
-    setResendCooldown(30)
+    const code = generarOTP()
+    setOtpSent(code)
+    setOtpErr('')
+    setSending(true)
+    const emailDestino = regEmail.trim().toLowerCase()
+    if (!emailDestino) {
+      setOtpErr('El correo electrónico es obligatorio.')
+      setSending(false)
+      return
+    }
+    console.log('📧 Enviando email a:', emailDestino)
+    console.log('📧 Código:', code)
+    try {
+      const result = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_REGISTRO,
+        {
+          passcode: code,
+          time: '15 minutos',
+          email: emailDestino,
+          to_name: regNombres.trim() || 'Usuario',
+          to_email: emailDestino,
+          from_name: 'Hernández Muebles',
+          reply_to: 'joserhernandezmuebles@gmail.com',
+          subject: 'Código de verificación — Hernández Muebles',
+          message: `Hola ${regNombres.trim() || 'Usuario'},\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para confirmar tu correo y activar tu cuenta.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
+          codigo: code,
+        },
+        EMAILJS_PUBLIC_KEY
+      )
+      console.log('✅ EmailJS enviado:', result)
+    } catch (err) {
+      console.error('❌ EmailJS error:')
+      console.error('  Status:', err.status)
+      console.error('  Text:', err.text)
+      console.error('  Message:', err.message)
+      if (err.status === 404) {
+        setOtpErr('❌ Error: Template no encontrado. Verifica el ID en EmailJS.')
+      } else if (err.status === 422) {
+        setOtpErr('❌ Error: El correo electrónico es inválido o está vacío.')
+      } else if (err.status === 403) {
+        setOtpErr('❌ Error: Credenciales incorrectas. Verifica tu Public Key.')
+      } else {
+        setOtpErr('❌ Error al enviar el código: ' + (err.text || 'Revisa tus credenciales de EmailJS.'))
+      }
+    } finally {
+      setSending(false)
+      setResendCooldown(30)
+    }
   }
-}
 
   async function doRegisterStart() {
     if (!validateRegFields()) return
@@ -395,6 +405,7 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword }) {
   async function sendForgotCode() {
     const e = forgotEmail.trim().toLowerCase()
     setForgotErr('')
+    console.log('🔍 Buscando email:', e)
     if (!e) {
       setForgotErr('Ingresa tu correo electrónico.')
       return
@@ -404,54 +415,55 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword }) {
       return
     }
     try {
+      console.log('📡 Verificando usuario en Supabase...')
       const res = await fetch('/api/clientes/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: e, password: '' }),
       })
       const data = await res.json()
+      console.log('📦 Respuesta de verificación:', data)
       if (!data.cliente) {
         setForgotErr('No encontramos una cuenta con ese correo.')
         return
       }
-    } catch {
-      setForgotErr('Error al verificar el correo.')
-      return
-    }
-    const code = generarOTP()
-    setForgotOtpSent(code)
-    setForgotOtpInputs(['', '', '', '', '', ''])
-    setForgotSending(true)
-    try {
-      if (EMAILJS_TEMPLATE_RECUPERAR !== 'TU_TEMPLATE_RECUPERAR') {
-        await emailjs.send(
+      console.log('✅ Usuario encontrado:', data.cliente.email)
+      const code = generarOTP()
+      setForgotOtpSent(code)
+      setForgotOtpInputs(['', '', '', '', '', ''])
+      setForgotSending(true)
+      console.log('📧 Enviando código de recuperación a:', e)
+      console.log('📧 Código:', code)
+      try {
+        const result = await emailjs.send(
           EMAILJS_SERVICE_ID,
           EMAILJS_TEMPLATE_RECUPERAR,
           {
             passcode: code,
             time: '15 minutos',
             email: e,
-            to_name: forgotEmail.trim().split('@')[0],
+            to_name: data.cliente.nombres || 'Usuario',
             to_email: e,
             from_name: 'Hernández Muebles',
-            reply_to: ADMIN_EMAIL,
+            reply_to: 'joserhernandezmuebles@gmail.com',
             subject: 'Recupera tu contraseña — Hernández Muebles',
-            message: `Hola,\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para crear una nueva contraseña.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
+            message: `Hola ${data.cliente.nombres || 'Usuario'},\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nTu código de verificación es:\n\n${code}\n\nIngresa este código para crear una nueva contraseña.\n\nSi no solicitaste esto, ignora este mensaje.\n\nHernández Muebles`,
             codigo: code,
           },
           EMAILJS_PUBLIC_KEY
         )
-      } else {
-        console.warn('[EmailJS no configurado] Código de recuperación:', code)
-        alert(`⚠️ EmailJS no está configurado todavía.\nTu código de prueba es: ${code}`)
+        console.log('✅ EmailJS respuesta:', result)
+        setForgotSent(true)
+      } catch (err) {
+        console.error('❌ EmailJS error:', err)
+        setForgotErr('No se pudo enviar el correo. Intenta nuevamente.')
+      } finally {
+        setForgotSending(false)
+        setForgotCooldown(30)
       }
-      setForgotSent(true)
-    } catch (err) {
-      console.error('EmailJS error:', err)
-      setForgotErr('No se pudo enviar el correo. Intenta nuevamente.')
-    } finally {
-      setForgotSending(false)
-      setForgotCooldown(30)
+    } catch (error) {
+      console.error('❌ Error verificando usuario:', error)
+      setForgotErr('Error al verificar el correo. Intenta nuevamente.')
     }
   }
 
@@ -472,27 +484,82 @@ function ModalAuth({ onClose, onLogin, onRegister, onResetPassword }) {
   }
 
   async function confirmResetPassword() {
-    const code = forgotOtpInputs.join('')
-    if (code.length !== 6) {
-      setForgotErr('Ingresa los 6 dígitos del código.')
-      return
-    }
-    if (code !== forgotOtpSent) {
-      setForgotErr('El código ingresado es incorrecto.')
-      return
-    }
-    if (forgotNewPass.length < 4) {
-      setForgotErr('La nueva contraseña debe tener al menos 4 carácteres.')
-      return
-    }
-    if (forgotNewPass !== forgotNewPass2) {
-      setForgotErr('Las contraseñas no coinciden.')
-      return
-    }
-    setForgotErr('')
-    onResetPassword(forgotEmail.trim().toLowerCase(), forgotNewPass)
-    setForgotOk(true)
+  const code = forgotOtpInputs.join('')
+  if (code.length !== 6) {
+    setForgotErr('Ingresa los 6 dígitos del código.')
+    return
   }
+  if (code !== forgotOtpSent) {
+    setForgotErr('El código ingresado es incorrecto.')
+    return
+  }
+  if (forgotNewPass.length < 4) {
+    setForgotErr('La nueva contraseña debe tener al menos 4 carácteres.')
+    return
+  }
+  if (forgotNewPass !== forgotNewPass2) {
+    setForgotErr('Las contraseñas no coinciden.')
+    return
+  }
+  
+  setForgotErr('')
+  setForgotSending(true)
+  
+  try {
+    const email = forgotEmail.trim().toLowerCase()
+    console.log('🔍 Buscando usuario por email:', email)
+    
+    const userRes = await fetch('/api/clientes/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: '' }),
+    })
+    
+    const userData = await userRes.json()
+    console.log('📦 Usuario encontrado:', userData)
+    
+    if (!userData.cliente) {
+      setForgotErr('No se encontró el usuario.')
+      setForgotSending(false)
+      return
+    }
+    
+    const userId = userData.cliente.id
+    console.log('✅ ID del usuario:', userId)
+    
+    const updateRes = await fetch(`/api/clientes/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword: forgotNewPass }),
+    })
+    
+    const responseText = await updateRes.text()
+    console.log('📦 Respuesta update:', responseText)
+    
+    let updateData
+    try {
+      updateData = JSON.parse(responseText)
+    } catch (e) {
+      console.error('❌ JSON parse error:', e)
+      setForgotErr('Error del servidor.')
+      setForgotSending(false)
+      return
+    }
+    
+    if (updateData.cliente) {
+      console.log('✅ Contraseña actualizada correctamente')
+      onResetPassword(email, forgotNewPass)
+      setForgotOk(true)
+    } else {
+      setForgotErr(updateData.error || 'Error al actualizar la contraseña')
+    }
+  } catch (error) {
+    console.error('❌ Error:', error)
+    setForgotErr('Error al conectar con el servidor')
+  } finally {
+    setForgotSending(false)
+  }
+}
 
   function backToLogin() {
     setForgotMode(false)
@@ -1311,6 +1378,13 @@ function ModalCotizar({ currentUser, onClose, onSubmit, coloresDB = [] }) {
       setErr('Completa las medidas (largo, ancho y altura).')
       return
     }
+    const largo = Number(data.largo)
+    const ancho = Number(data.ancho)
+    const prof = Number(data.prof)
+    if (largo <= 0 || ancho <= 0 || prof <= 0) {
+      setErr('Las medidas deben ser mayores a 0.')
+      return
+    }
     if (!data.material) {
       setErr('Selecciona un material.')
       return
@@ -1518,12 +1592,12 @@ function ModalCotizar({ currentUser, onClose, onSubmit, coloresDB = [] }) {
                       {dimsLabels.map(([key, label]) => (
                         <div className="cz-field" key={key}>
                           <label>{label} (cm)</label>
-                          <input 
-                            type="number" 
-                            min="1" 
+                          <input
+                            type="number"
+                            min="1"
                             step="1"
-                            value={data[key]} 
-                            onChange={e => {
+                            value={data[key]}
+                            onChange={(e) => {
                               const val = Number(e.target.value)
                               if (val < 0) {
                                 setErr('Las medidas no pueden ser negativas.')
@@ -1532,8 +1606,8 @@ function ModalCotizar({ currentUser, onClose, onSubmit, coloresDB = [] }) {
                                 setErr('')
                                 set(key, e.target.value)
                               }
-                            }} 
-                            placeholder="0" 
+                            }}
+                            placeholder="0"
                           />
                         </div>
                       ))}
@@ -2117,6 +2191,7 @@ function PageAdmin({
   precios,
   coloresDB = [],
   cargarCotizaciones,
+  cargarMensajes,
   cargarColoresDB,
   cargarPreciosDB,
   handleGuardarPreciosBD,
@@ -2155,14 +2230,7 @@ function PageAdmin({
   const [matMano, setMatMano] = useState(0)
   const [extras, setExtras] = useState([])
 
-  useEffect(() => {
-    if (section === 'precios' && cargarColoresDB) {
-      cargarColoresDB()
-    }
-    if ((section === 'cotizaciones' || section === 'gestionar' || section === 'chat') && cargarCotizaciones) {
-      cargarCotizaciones()
-    }
-  }, [section, cargarColoresDB, cargarCotizaciones])
+  const cargandoCotizacionesRef = useRef(false)
 
   const filtered = cotizaciones.filter((q) => {
     if (filter === 'cotización') return q.estado === 'cotización'
@@ -2178,6 +2246,30 @@ function PageAdmin({
   })
 
   const cot = cotizaciones.find((c) => c.id === selectedId)
+
+  useEffect(() => {
+    if (selectedId && cargarMensajes) {
+      cargarMensajes(selectedId)
+    }
+  }, [selectedId, cargarMensajes])
+
+  useEffect(() => {
+    if (section === 'precios' && cargarColoresDB) {
+      cargarColoresDB()
+    }
+  }, [section, cargarColoresDB])
+
+  useEffect(() => {
+    if ((section === 'cotizaciones' || section === 'gestionar' || section === 'chat') && cargarCotizaciones) {
+      if (!cargandoCotizacionesRef.current) {
+        cargandoCotizacionesRef.current = true
+        cargarCotizaciones()
+        setTimeout(() => {
+          cargandoCotizacionesRef.current = false
+        }, 3000)
+      }
+    }
+  }, [section, cargarCotizaciones])
 
   const SideBtn = ({ id, icon, label }) => (
     <button
@@ -2247,15 +2339,12 @@ function PageAdmin({
 
   async function sendEmail() {
   if (!cot || !emailDraft.trim()) return
-  
   if (!cot.email || cot.email.trim() === '') {
     alert('❌ El cliente no tiene un email registrado.')
     return
   }
-  
   setEmailSending(true)
   setEmailStatus(null)
-  
   try {
     await emailjs.send(
       EMAILJS_SERVICE_ID,
@@ -2264,7 +2353,7 @@ function PageAdmin({
         to_name: cot.nombre || 'Cliente',
         to_email: cot.email.trim(),
         from_name: 'Hernández Muebles',
-        reply_to: ADMIN_EMAIL,
+        reply_to: 'joserhernandezmuebles@gmail.com',
         subject: `Cotización ${cot.código} — Hernández Muebles`,
         message: emailDraft,
         codigo: cot.código,
@@ -2309,7 +2398,9 @@ function PageAdmin({
     
     const subtotal = filas.reduce((acc, f) => acc + (Number(f.q) || 0) * (Number(f.p) || 0), 0)
     const mano = Number(matMano) || 0
-    const total = subtotal + mano
+    const subtotalConMano = subtotal + mano
+    const iva = subtotalConMano * IVA
+    const total = subtotalConMano + iva
 
     let presupuestoTexto = ''
     if (filas.length > 0 || mano > 0) {
@@ -2321,7 +2412,9 @@ function PageAdmin({
         ...filas.map(f => `• ${f.label}: ${f.q} × $${(Number(f.p)||0).toLocaleString('es-CL')} = $${((Number(f.q)||0)*(Number(f.p)||0)).toLocaleString('es-CL')}`),
         ...(mano > 0 ? [`• Mano de obra: $${mano.toLocaleString('es-CL')}`] : []),
         `──────────────────────`,
-        `TOTAL: $${total.toLocaleString('es-CL')}`,
+        `SUBTOTAL: $${subtotalConMano.toLocaleString('es-CL')}`,
+        `IVA (19%): $${iva.toLocaleString('es-CL')}`,
+        `TOTAL A PAGAR: $${total.toLocaleString('es-CL')}`,
         `──────────────────────`,
       ].join('\n')
     }
@@ -2332,49 +2425,117 @@ function PageAdmin({
     return `Buenos ${saludo}, señor/señora ${partes[0] || 'cliente'}.\n\nLe escribimos respecto a su cotización código ${q.código}.\n\n──────────────────────\nDATOS DE COTIZACIÓN\n──────────────────────\nCódigo: ${q.código}\nFecha: ${q.fecha}\nCliente: ${q.nombre}\nCorreo: ${q.email}\nTeléfono: ${q.número}\n\nTipo: ${q.tipo}\nMedidas: ${q.dim.ancho} × ${q.dim.alto} × ${q.dim.prof} cm\nMaterial: ${q.material}\n${q.descripción ? `Descripción: ${q.descripción}` : ''}\n──────────────────────${presupuestoTexto}\n\n¿Desea confirmar el pedido?\nContáctenos con el código: ${q.código}\n\nAtentamente,\nHernández Muebles\njoserhernandezmuebles@gmail.com`
   }
 
+  // ✅ NUEVA FUNCIÓN
+  function generarCorreoPresupuestoConDatos(q) {
+    if (!q) return null
+
+    const melP = matMelTipo ? (precios.melamina?.[matMelTipo] || 0) : 0
+    const mdfP = matMdfTipo?.includes('18') ? precios.mdf18 : precios.mdf9
+    const tcP = matTcTipo ? (precios.tapacanto?.[matTcTipo] || 0) : 0
+    
+    const filas = [
+      { label: `Melamina${matMelTipo ? ' — ' + matMelTipo : ''}`, q: matMel, p: melP, show: Number(matMel) > 0 },
+      { label: `MDF ${matMdfTipo?.includes('18') ? '18mm' : '9mm'}`, q: matMdf, p: mdfP, show: Number(matMdf) > 0 },
+      { label: `Tapacanto${matTcTipo ? ' — ' + matTcTipo : ''}`, q: matTapacanto, p: tcP, show: Number(matTapacanto) > 0 },
+      { label: 'Tornillos (cajas)', q: matTornillos, p: precios.tornillos || 0, show: Number(matTornillos) > 0 },
+      { label: 'Manillas', q: matManillas, p: matManillaP || precios.manillas || 0, show: Number(matManillas) > 0 },
+      { label: 'Ruedas', q: matRuedas, p: matRuedasP || precios.ruedas || 0, show: Number(matRuedas) > 0 },
+      { label: 'Bisagras', q: matBisagras, p: matBisagrasP || precios.bisagras || 0, show: Number(matBisagras) > 0 },
+      ...extras.filter(e => Number(e.q) > 0).map(e => ({ label: e.desc || 'Ítem extra', q: e.q, p: e.p, show: true })),
+    ].filter(f => f.show)
+    
+    const subtotal = filas.reduce((acc, f) => acc + (Number(f.q) || 0) * (Number(f.p) || 0), 0)
+    const mano = Number(matMano) || 0
+    const subtotalConMano = subtotal + mano
+    const iva = subtotalConMano * IVA
+    const total = subtotalConMano + iva
+
+    let presupuestoTexto = ''
+    if (filas.length > 0 || mano > 0) {
+      presupuestoTexto = [
+        ``,
+        `──────────────────────`,
+        `PRESUPUESTO DE MATERIALES`,
+        `──────────────────────`,
+        ...filas.map(f => `• ${f.label}: ${f.q} × $${(Number(f.p)||0).toLocaleString('es-CL')} = $${((Number(f.q)||0)*(Number(f.p)||0)).toLocaleString('es-CL')}`),
+        ...(mano > 0 ? [`• Mano de obra: $${mano.toLocaleString('es-CL')}`] : []),
+        `──────────────────────`,
+        `SUBTOTAL: $${subtotalConMano.toLocaleString('es-CL')}`,
+        `IVA (19%): $${iva.toLocaleString('es-CL')}`,
+        `TOTAL A PAGAR: $${total.toLocaleString('es-CL')}`,
+        `──────────────────────`,
+      ].join('\n')
+    }
+
+    const partes = (q.clientes?.nombres || '').trim().split(/\s+/)
+    const saludo = getSaludo()
+    const nombreCliente = q.clientes?.nombres + ' ' + q.clientes?.apellidos || 'Cliente'
+
+    return `Buenos ${saludo}, señor/señora ${partes[0] || 'cliente'}.\n\nLe escribimos respecto a su cotización código ${q.codigo}.\n\n──────────────────────\nDATOS DE COTIZACIÓN\n──────────────────────\nCódigo: ${q.codigo}\nFecha: ${q.fecha}\nCliente: ${nombreCliente}\nCorreo: ${q.clientes?.email || ''}\nTeléfono: ${q.clientes?.telefono || ''}\n\nTipo: ${q.tipo_otro || ['Escritorio','Cocina','Baño','Otro'][q.tipo_id - 1] || ''}\nMedidas: ${q.ancho} × ${q.alto} × ${q.prof} cm\nMaterial: ${q.material}\n${q.descripcion ? `Descripción: ${q.descripcion}` : ''}\n──────────────────────${presupuestoTexto}\n\n¿Desea confirmar el pedido?\nContáctenos con el código: ${q.codigo}\n\nAtentamente,\nHernández Muebles\njoserhernandezmuebles@gmail.com`
+  }
+
   async function enviarCorreoPresupuesto() {
-  const q = cotizaciones.find(c => String(c.id) === calcCotId)
-  if (!q) {
+  const cotId = calcCotId
+  if (!cotId) {
     alert('Primero selecciona una cotización')
     return
   }
 
-  if (!q.email || q.email.trim() === '') {
-    alert('❌ El cliente no tiene un email registrado.')
-    return
-  }
-
-  const emailDraft = generarCorreoPresupuesto()
-  if (!emailDraft || !emailDraft.trim()) return
-
-  setEmailSending(true)
-  setEmailStatus(null)
-
   try {
-    await emailjs.send(
+    console.log('📡 Obteniendo cotización ID:', cotId)
+    
+    const res = await fetch(`/api/cotizaciones/${cotId}`)
+    const data = await res.json()
+    const q = data.cotizacion
+    
+    console.log('📦 Cotización obtenida:', q)
+    console.log('📦 Cliente:', q?.clientes)
+    console.log('📦 Email:', q?.clientes?.email)
+    
+    if (!q) {
+      alert('Cotización no encontrada')
+      return
+    }
+
+    const emailCliente = q.clientes?.email || ''
+    
+    if (!emailCliente || emailCliente.trim() === '') {
+      alert('❌ El cliente no tiene un email registrado.')
+      return
+    }
+
+    const emailDraft = generarCorreoPresupuestoConDatos(q)
+    if (!emailDraft || !emailDraft.trim()) {
+      alert('❌ No se pudo generar el contenido del correo.')
+      return
+    }
+
+    setEmailSending(true)
+    setEmailStatus(null)
+
+    const result = await emailjs.send(
       EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_CONFIRMACION,
+      EMAILJS_TEMPLATE_COTIZACION,
       {
-        to_name: q.nombre || 'Cliente',
-        to_email: q.email.trim(),  
+        to_name: q.clientes?.nombres + ' ' + q.clientes?.apellidos || 'Cliente',
+        to_email: emailCliente.trim(),
         from_name: 'Hernández Muebles',
-        reply_to: ADMIN_EMAIL,
-        subject: `Presupuesto ${q.código} — Hernández Muebles`,
+        reply_to: 'joserhernandezmuebles@gmail.com',
+        subject: `Presupuesto ${q.codigo} — Hernández Muebles`,
         message: emailDraft,
-        codigo: q.código,
+        codigo: q.codigo,
       },
       EMAILJS_PUBLIC_KEY
     )
+    
+    console.log('✅ EmailJS respuesta:', result)
     setEmailStatus('ok')
-    alert(`✅ Presupuesto enviado a ${q.email}`)
+    alert(`✅ Presupuesto enviado a ${emailCliente}`)
+    
   } catch (err) {
-    console.error('EmailJS error:', err)
-    if (err.status === 422) {
-      alert('❌ Error: El correo del cliente está vacío o es inválido.')
-    } else {
-      setEmailStatus('error')
-      alert('❌ Error al enviar el correo. Revisa tus credenciales de EmailJS.')
-    }
+    console.error('❌ Error:', err)
+    alert('❌ Error al enviar el correo: ' + (err.message || 'Revisa tus credenciales de EmailJS.'))
+    setEmailStatus('error')
   } finally {
     setEmailSending(false)
   }
@@ -2394,7 +2555,10 @@ function PageAdmin({
       { q: matBisagras, p: matBisagrasP || precios.bisagras || 0 },
       ...extras.map((e) => ({ q: e.q, p: e.p })),
     ]
-    return items.reduce((acc, it) => acc + (Number(it.q) || 0) * (Number(it.p) || 0), 0) + (Number(matMano) || 0)
+    const subtotal = items.reduce((acc, it) => acc + (Number(it.q) || 0) * (Number(it.p) || 0), 0) + (Number(matMano) || 0)
+    const iva = subtotal * IVA
+    const total = subtotal + iva
+    return { subtotal, iva, total }
   }
 
   return (
@@ -2802,7 +2966,10 @@ function PageAdmin({
                           const res = await fetch('/api/pdf/cotizacion', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(q),
+                            body: JSON.stringify({
+                              ...q,
+                              adjuntoBase64: q.adjuntoBase64  // ✅ Asegurar que la imagen se envía
+                            }),
                           })
                           if (!res.ok) throw new Error('Error al generar PDF')
                           const blob = await res.blob()
@@ -3118,33 +3285,35 @@ function PageAdmin({
                   Cotización de referencia
                 </label>
                 <select
-                  value={calcCotId}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setCalcCotId(val)
-                    const q = cotizaciones.find((c) => String(c.id) === val)
-                    if (q?.color) {
-                      setMatMelTipo(q.color)
-                      setMatTcTipo(q.color)
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid rgba(217,217,217,.7)',
-                    borderRadius: 10,
-                    fontSize: 14,
-                    background: 'rgba(255,255,255,.70)',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="">— Selecciónar cotización —</option>
-                  {cotizaciones.map((c) => (
-                    <option key={c.id} value={String(c.id)}>
-                      [{c.código}] {c.nombre} — {c.tipo}
-                    </option>
-                  ))}
-                </select>
+  value={calcCotId}
+  onChange={(e) => {
+    const val = e.target.value
+    setCalcCotId(val)
+    const q = cotizaciones.find((c) => String(c.id) === val)
+    console.log('🔍 Cotización seleccionada en calculadora:', q)
+    console.log('🔍 Email de la cotización seleccionada:', q?.email)
+    if (q?.color) {
+      setMatMelTipo(q.color)
+      setMatTcTipo(q.color)
+    }
+  }}
+  style={{
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid rgba(217,217,217,.7)',
+    borderRadius: 10,
+    fontSize: 14,
+    background: 'rgba(255,255,255,.70)',
+    boxSizing: 'border-box',
+  }}
+>
+  <option value="">— Selecciónar cotización —</option>
+  {cotizaciones.map((c) => (
+    <option key={c.id} value={String(c.id)}>
+      [{c.código}] {c.nombre} — {c.tipo}
+    </option>
+  ))}
+</select>
               </div>
 
               {(() => {
@@ -3654,7 +3823,9 @@ function PageAdmin({
 
                 const subtotal = filas.reduce((acc, f) => acc + (Number(f.q) || 0) * (Number(f.p) || 0), 0)
                 const mano = Number(matMano) || 0
-                const total = subtotal + mano
+                const subtotalConMano = subtotal + mano
+                const iva = subtotalConMano * IVA
+                const total = subtotalConMano + iva
 
                 return (
                   <>
@@ -3724,6 +3895,42 @@ function PageAdmin({
 
                         <div
                           style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 70px 90px 90px',
+                            padding: '7px 12px',
+                            fontSize: 13,
+                            borderTop: '1px solid rgba(200,180,160,.25)',
+                            background: 'rgba(255,255,255,.4)',
+                          }}
+                        >
+                          <span style={{ fontWeight: 700, color: '#5c3a1e' }}>SUBTOTAL</span>
+                          <span></span>
+                          <span></span>
+                          <span style={{ textAlign: 'right', fontWeight: 700, color: '#5c3a1e' }}>
+                            ${subtotalConMano.toLocaleString('es-CL')}
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 70px 90px 90px',
+                            padding: '7px 12px',
+                            fontSize: 13,
+                            borderTop: '1px solid rgba(200,180,160,.25)',
+                            background: 'rgba(255,255,255,.3)',
+                          }}
+                        >
+                          <span style={{ fontWeight: 700, color: '#5c3a1e' }}>IVA (19%)</span>
+                          <span></span>
+                          <span></span>
+                          <span style={{ textAlign: 'right', fontWeight: 700, color: '#5c3a1e' }}>
+                            ${iva.toLocaleString('es-CL')}
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
                             borderTop: '2px solid rgba(139,94,60,.3)',
                             background: 'rgba(139,94,60,.08)',
                             padding: '10px 12px',
@@ -3732,8 +3939,8 @@ function PageAdmin({
                             alignItems: 'center',
                           }}
                         >
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#5c3a1e' }}>TOTAL PRESUPUESTO</span>
-                          <span style={{ fontSize: 20, fontWeight: 800, color: '#5c3a1e' }}>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: '#5c3a1e' }}>TOTAL A PAGAR</span>
+                          <span style={{ fontSize: 22, fontWeight: 800, color: '#5c3a1e' }}>
                             ${total.toLocaleString('es-CL')}
                           </span>
                         </div>
@@ -3741,7 +3948,7 @@ function PageAdmin({
                     ) : (
                       <div style={{ background: 'rgba(139,94,60,.08)', borderRadius: 10, padding: 14, marginTop: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800, color: '#5c3a1e' }}>
-                          <span>TOTAL PRESUPUESTO</span>
+                          <span>TOTAL A PAGAR</span>
                           <span>${total.toLocaleString('es-CL')}</span>
                         </div>
                       </div>
@@ -3752,13 +3959,16 @@ function PageAdmin({
                         onClick={async () => {
                           const q = cotizaciones.find((c) => String(c.id) === calcCotId)
                           try {
+                            const { subtotal, iva, total } = calcTotal()
                             const payload = {
                               cotizacion: q || null,
                               filas,
                               mano,
+                              subtotal,
+                              iva,
                               total,
                               fecha: new Date().toLocaleDateString('es-CL'),
-                            }
+}
                             const res = await fetch('/api/pdf/presupuesto', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
@@ -4038,7 +4248,6 @@ export default function App() {
   async function cargarCotizaciones() {
   if (!currentUser) return
   if (cargando) return
-  
   try {
     setCargando(true)
     const url = currentUser.is_admin
@@ -4050,62 +4259,55 @@ export default function App() {
     if (data.cotizaciones) {
       const etapas = ['cotización', 'fabricación', 'entrega', 'entregado']
       const tipos = ['Escritorio', 'Cocina', 'Baño', 'Otro']
-      const formateadas = await Promise.all(
-        data.cotizaciones.map(async (c) => {
-          let mensajes = []
-          let clienteData = null
-          
-          try {
-            const mensajesRes = await fetch(`/api/cotizaciones/${c.id}/mensajes`)
-            const mensajesData = await mensajesRes.json()
-            mensajes = mensajesData.mensajes || []
-          } catch (e) {
-            console.warn('Error cargando mensajes:', e)
-          }
-
-          try {
-            if (c.cliente_id) {
-              const clienteRes = await fetch(`/api/clientes/${c.cliente_id}`)
-              const clienteJson = await clienteRes.json()
-              clienteData = clienteJson.cliente
-            }
-          } catch (e) {
-            console.warn('Error cargando cliente:', e)
-          }
-
-          return {
-            id: c.id,
-            código: c.codigo,
-            estado: etapas[c.etapa_id - 1] || 'cotización',
-            clienteEmail: c.cliente_id,
-            nombre: clienteData?.nombres + ' ' + clienteData?.apellidos || c.clientes?.nombres + ' ' + c.clientes?.apellidos || 'Cliente',
-            email: clienteData?.email || c.clientes?.email || '',
-            número: clienteData?.telefono || c.clientes?.telefono || '',
-            tipo: c.tipo_otro || tipos[c.tipo_id - 1] || '',
-            tipoOtro: c.tipo_otro || '',
-            diseñoId: '',
-            diseñoTitulo: c.diseno_titulo || '',
-            dim: { ancho: c.ancho, alto: c.alto, prof: c.prof },
-            material: c.material || '--',
-            color: c.color || '--',
-            colorHex: c.color_hex || '',
-            colorTextura: c.color_textura || '',
-            colorGrain: c.color_grain || '',
-            descripción: c.descripcion || '',
-            adjunto: null,
-            adjuntoBase64: c.adjunto_url || null,
-            fecha: new Date(c.fecha).toLocaleString('es-CL'),
-            mensajes: mensajes,
-            chatCerrado: c.chat_cerrado || false,
-          }
-        })
-      )
+      
+      const formateadas = data.cotizaciones.map((c) => {
+        
+        return {
+          id: c.id,
+          código: c.codigo,
+          estado: etapas[c.etapa_id - 1] || 'cotización',
+          clienteEmail: c.cliente_id,
+          nombre: c.clientes?.nombres + ' ' + c.clientes?.apellidos || 'Cliente',
+          email: c.clientes?.email || '',
+          número: c.clientes?.telefono || '',
+          tipo: c.tipo_otro || tipos[c.tipo_id - 1] || '',
+          tipoOtro: c.tipo_otro || '',
+          diseñoId: '',
+          diseñoTitulo: c.diseno_titulo || '',
+          dim: { ancho: c.ancho, alto: c.alto, prof: c.prof },
+          material: c.material || '--',
+          color: c.color || '--',
+          colorHex: c.color_hex || '',
+          colorTextura: c.color_textura || '',
+          colorGrain: c.color_grain || '',
+          descripción: c.descripcion || '',
+          adjunto: null,
+          adjuntoBase64: c.adjunto_url || null,
+          fecha: new Date(c.fecha).toLocaleString('es-CL'),
+          mensajes: [],
+          chatCerrado: c.chat_cerrado || false,
+        }
+      })
       setCotizaciones(formateadas)
     }
   } catch (error) {
     console.error('❌ Error cargando cotizaciones:', error)
   } finally {
     setCargando(false)
+  }
+}
+
+  async function cargarMensajes(cotizacionId) {
+  try {
+    const res = await fetch(`/api/cotizaciones/${cotizacionId}/mensajes`)
+    const data = await res.json()
+    if (data.mensajes) {
+      setCotizaciones(prev => prev.map(c => 
+        c.id === cotizacionId ? { ...c, mensajes: data.mensajes } : c
+      ))
+    }
+  } catch (error) {
+    console.error('Error cargando mensajes:', error)
   }
 }
 
@@ -4129,46 +4331,54 @@ export default function App() {
   }
 
   async function crearCotizacion(datos) {
-    if (!currentUser) throw new Error('Usuario no autenticado')
-    try {
-      const tiposMap = { Escritorio: 1, Cocina: 2, Baño: 3, Otro: 4 }
-      const tipoId = tiposMap[datos.tipo] || 4
-      let adjuntoUrl = ''
-      if (datos.adjuntoBase64) {
-        adjuntoUrl = await subirImagen(datos.adjuntoBase64, datos.código)
-      }
-      const payload = {
-        cliente_id: currentUser.id,
-        tipo_id: tipoId,
-        ancho: parseInt(datos.dim.ancho) || 0,
-        alto: parseInt(datos.dim.alto) || 0,
-        prof: parseInt(datos.dim.prof) || 0,
-        material: datos.material || '',
-        color: datos.color || '',
-        color_hex: datos.colorHex || '',
-        color_textura: datos.colorTextura || '',
-        color_grain: datos.colorGrain || '',
-        descripcion: datos.descripción || '',
-        adjunto_url: adjuntoUrl,
-        tipo_otro: datos.tipoOtro || '',
-        diseno_titulo: datos.diseñoTitulo || '',
-      }
-      const res = await fetch('/api/cotizaciones', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const data = await res.json()
-      if (data.cotizacion) {
-        await cargarCotizaciones()
-        return data.cotizacion
-      }
-      throw new Error(data.error || 'Error al crear cotización')
-    } catch (error) {
-      console.error('Error:', error)
-      throw error
+  if (!currentUser) throw new Error('Usuario no autenticado')
+  try {
+    const tiposMap = { Escritorio: 1, Cocina: 2, Baño: 3, Otro: 4 }
+    const tipoId = tiposMap[datos.tipo] || 4
+    
+
+    let adjuntoUrl = ''
+    if (datos.adjuntoBase64) {
+      console.log('📤 Subiendo imagen...')
+      adjuntoUrl = await subirImagen(datos.adjuntoBase64, datos.código)
+      console.log('✅ Imagen subida, URL:', adjuntoUrl)
     }
+    
+    const payload = {
+      cliente_id: currentUser.id,
+      tipo_id: tipoId,
+      ancho: parseInt(datos.dim.ancho) || 0,
+      alto: parseInt(datos.dim.alto) || 0,
+      prof: parseInt(datos.dim.prof) || 0,
+      material: datos.material || '',
+      color: datos.color || '',
+      color_hex: datos.colorHex || '',
+      color_textura: datos.colorTextura || '',
+      color_grain: datos.colorGrain || '',
+      descripcion: datos.descripción || '',
+      adjunto_url: adjuntoUrl,
+      tipo_otro: datos.tipoOtro || '',
+      diseno_titulo: datos.diseñoTitulo || '',
+    }
+    
+    console.log('📤 Enviando cotización con adjunto_url:', adjuntoUrl)
+    
+    const res = await fetch('/api/cotizaciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const data = await res.json()
+    if (data.cotizacion) {
+      await cargarCotizaciones()
+      return data.cotizacion
+    }
+    throw new Error(data.error || 'Error al crear cotización')
+  } catch (error) {
+    console.error('Error:', error)
+    throw error
   }
+}
 
   async function enviarMensaje(cotizacionId, texto, autor) {
     if (!texto.trim()) return
@@ -4209,20 +4419,20 @@ export default function App() {
   }
 
   async function actualizarChat(cotizacionId, cerrado) {
-  try {
-    const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_cerrado: cerrado }),
-    })
-    const data = await res.json()
-    if (data.cotizacion) {
-      await cargarCotizaciones()
+    try {
+      const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_cerrado: cerrado }),
+      })
+      const data = await res.json()
+      if (data.cotizacion) {
+        await cargarCotizaciones()
+      }
+    } catch (error) {
+      console.error('Error actualizando chat:', error)
     }
-  } catch (error) {
-    console.error('Error actualizando chat:', error)
   }
-}
 
   async function eliminarCotizacion(cotizacionId) {
     if (!confirm('¿Eliminar esta cotización?')) return
@@ -4402,24 +4612,40 @@ export default function App() {
     setCurrentUser((prev) => ({ ...prev, password: nuevaPass }))
   }
 
-  const handleResetPassword = (email, nuevaPass) => {
-    fetch('/api/clientes/login', {
+  const handleResetPassword = async (email, nuevaPass) => {
+  console.log('🔍 handleResetPassword llamado para:', email)
+  
+  try {
+    // Primero obtener el usuario por email
+    const userRes = await fetch('/api/clientes/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: '' }),
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.cliente) {
-          fetch(`/api/clientes/${data.cliente.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ newPassword: nuevaPass }),
-          })
-        }
-      })
-      .catch(console.error)
+    const userData = await userRes.json()
+    
+    if (!userData.cliente) {
+      console.error('❌ Usuario no encontrado')
+      return
+    }
+    
+    const updateRes = await fetch(`/api/clientes/${userData.cliente.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword: nuevaPass }),
+    })
+    
+    const updateData = await updateRes.json()
+    
+    if (updateData.cliente) {
+      console.log('✅ Contraseña actualizada correctamente en handleResetPassword')
+    } else {
+      console.error('❌ Error actualizando:', updateData.error)
+    }
+  } catch (error) {
+    console.error('❌ Error en handleResetPassword:', error)
   }
+}
 
   const handleUpdatePrecio = (tipo, nombre, valor) => {
     if (tipo === 'melamina' && nombre) {
@@ -4509,6 +4735,7 @@ export default function App() {
           precios={precios}
           coloresDB={coloresDB}
           cargarCotizaciones={cargarCotizaciones}
+          cargarMensajes={cargarMensajes}
           cargarColoresDB={cargarColoresDB}
           cargarPreciosDB={cargarPreciosDB}
           handleGuardarPreciosBD={handleGuardarPreciosBD}

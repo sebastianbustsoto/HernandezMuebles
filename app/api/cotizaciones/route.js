@@ -31,7 +31,13 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json()
-    const { cliente_id, tipo_id, ancho, alto, prof, material, color, color_hex, color_textura, color_grain, descripcion, adjunto_url, tipo_otro, diseno_titulo } = body
+    const { 
+      cliente_id, tipo_id, ancho, alto, prof, material, color, 
+      color_hex, color_textura, color_grain, descripcion, 
+      adjunto_url, tipo_otro, diseno_titulo 
+    } = body
+
+    console.log('📥 Recibiendo cotización con adjunto_url:', adjunto_url)
 
     const { data, error } = await supabaseAdmin
       .from('cotizaciones')
@@ -60,6 +66,7 @@ export async function POST(req) {
       return Response.json({ error: error.message }, { status: 500 })
     }
 
+    console.log('✅ Cotización creada con adjunto_url:', data.adjunto_url)
     return Response.json({ cotizacion: data }, { status: 201 })
   } catch (err) {
     console.error('Error:', err)
