@@ -2759,6 +2759,7 @@ function PageAdmin({
                               className="btn-primary btn-sm"
                               onClick={() => {
                                 if (!confirm(`¿Aceptar cotización de ${q.nombre}?`)) return
+                                console.log('🔄 Aceptando cotización:', q.id)
                                 onAceptar(q.id)
                               }}
                             >
@@ -4401,22 +4402,29 @@ export default function App() {
   }
 
   async function actualizarEtapa(cotizacionId, etapa) {
-    try {
-      const etapasMap = { cotización: 1, fabricación: 2, entrega: 3, entregado: 4 }
-      const etapaId = etapasMap[etapa] || 1
-      const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ etapa_id: etapaId }),
-      })
-      const data = await res.json()
-      if (data.cotizacion) {
-        await cargarCotizaciones()
-      }
-    } catch (error) {
-      console.error('Error actualizando etapa:', error)
+  console.log('📡 Actualizando etapa:', cotizacionId, 'a', etapa)
+  try {
+    const etapasMap = { cotización: 1, fabricación: 2, entrega: 3, entregado: 4 }
+    const etapaId = etapasMap[etapa] || 1
+    
+    const res = await fetch(`/api/cotizaciones/${cotizacionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ etapa_id: etapaId }),
+    })
+    
+    const data = await res.json()
+    console.log('📦 Respuesta actualización:', data)
+    
+    if (data.cotizacion) {
+      await cargarCotizaciones()
+    } else {
+      console.error('❌ Error:', data.error)
     }
+  } catch (error) {
+    console.error('❌ Error actualizando etapa:', error)
   }
+}
 
   async function actualizarChat(cotizacionId, cerrado) {
     try {
@@ -4599,9 +4607,14 @@ export default function App() {
   }
 
   const handleAceptar = async (id) => {
-    await actualizarEtapa(id, 'fabricación')
-    await enviarMensaje(id, 'Cotización aceptada. Pasando a fabricación.', 'admin')
-  }
+  console.log('📡 Aceptando cotización ID:', id)
+  
+  await actualizarEtapa(id, 'fabricación')
+  
+  await enviarMensaje(id, 'Cotización aceptada. Pasando a fabricación.', 'admin')
+  
+  await cargarCotizaciones()
+}
 
   const handleUpdateProfile = (datos) => {
     setCurrentUser(datos)
