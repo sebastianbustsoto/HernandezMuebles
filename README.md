@@ -1,5 +1,5 @@
-**Hernández Muebles - Plataforma de Gestión de Cotizaciones y Pedidos
-**
+Hernández Muebles - Plataforma de Gestión de Cotizaciones y Pedidos
+Rubro: E-Comerce
 
 Descripción del Proyecto
 
