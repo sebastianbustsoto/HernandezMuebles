@@ -1,75 +1,94 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-export async function GET(req) {
+export async function GET(req, { params }) {
   try {
-    const url = new URL(req.url)
-    const clienteId = url.searchParams.get('clienteId')
+    const { id } = params
+    console.log('🔍 GET - Buscando cotización ID:', id)
+    
+    const { data, error } = await supabaseAdmin
+      .from('cotizaciones')
+      .select(`
+        *,
+        clientes (
+          id,
+          nombres,
+          apellidos,
+          email,
+          telefono
+        )
+      `)
+      .eq('id', parseInt(id))
+      .single()
 
-    let query = supabaseAdmin.from('cotizaciones').select(`
-      *,
-      clientes (
-        id,
-        nombres,
-        apellidos,
-        email,
-        telefono
-      )
-    `).order('fecha', { ascending: false })
-
-    if (clienteId) {
-      query = query.eq('cliente_id', parseInt(clienteId))
+    if (error) {
+      console.error('❌ Error GET:', error)
+      return Response.json({ error: error.message }, { status: 500 })
     }
 
-    const { data, error } = await query
-    if (error) return Response.json({ error: error.message }, { status: 500 })
-    return Response.json({ cotizaciones: data || [] })
+    if (!data) {
+      return Response.json({ error: 'Cotización no encontrada' }, { status: 404 })
+    }
+
+    return Response.json({ cotizacion: data })
   } catch (err) {
+    console.error('❌ Error en GET:', err)
     return Response.json({ error: err.message }, { status: 500 })
   }
 }
 
-export async function POST(req) {
+export async function PATCH(req, { params }) {
   try {
+    const { id } = params
     const body = await req.json()
-    const { 
-      cliente_id, tipo_id, ancho, alto, prof, material, color, 
-      color_hex, color_textura, color_grain, descripcion, 
-      adjunto_url, tipo_otro, diseno_titulo 
-    } = body
+    console.log('📡 PATCH - Actualizando cotización ID:', id)
+    console.log('📦 Datos:', body)
 
-    console.log('📥 Recibiendo cotización con adjunto_url:', adjunto_url)
+    const updates = {}
+    if (body.etapa_id !== undefined) updates.etapa_id = parseInt(body.etapa_id)
+    if (body.chat_cerrado !== undefined) updates.chat_cerrado = body.chat_cerrado
+
+    if (Object.keys(updates).length === 0) {
+      return Response.json({ error: 'No hay datos para actualizar' }, { status: 400 })
+    }
 
     const { data, error } = await supabaseAdmin
       .from('cotizaciones')
-      .insert({
-        cliente_id: parseInt(cliente_id),
-        tipo_id: parseInt(tipo_id),
-        ancho: parseInt(ancho),
-        alto: parseInt(alto),
-        prof: parseInt(prof),
-        material: material || '',
-        color: color || '',
-        color_hex: color_hex || '',
-        color_textura: color_textura || '',
-        color_grain: color_grain || '',
-        descripcion: descripcion || '',
-        adjunto_url: adjunto_url || '',
-        tipo_otro: tipo_otro || '',
-        diseno_titulo: diseno_titulo || '',
-        etapa_id: 1
-      })
+      .update(updates)
+      .eq('id', parseInt(id))
       .select()
       .single()
 
     if (error) {
-      console.error('Error:', error)
+      console.error('❌ Error PATCH:', error)
       return Response.json({ error: error.message }, { status: 500 })
     }
 
-    console.log('✅ Cotización creada con adjunto_url:', data.adjunto_url)
-    return Response.json({ cotizacion: data }, { status: 201 })
+    console.log('✅ Cotización actualizada:', data.id)
+    return Response.json({ cotizacion: data })
   } catch (err) {
-    console.error('Error:', err)
+    console.error('❌ Error en PATCH:', err)
+    return Response.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(req, { params }) {
+  try {
+    const { id } = params
+    console.log('📡 DELETE - Eliminando cotización ID:', id)
+    
+    const { error } = await supabaseAdmin
+      .from('cotizaciones')
+      .delete()
+      .eq('id', parseInt(id))
+
+    if (error) {
+      console.error('❌ Error DELETE:', error)
+      return Response.json({ error: error.message }, { status: 500 })
+    }
+
+    return Response.json({ success: true })
+  } catch (err) {
+    console.error('❌ Error en DELETE:', err)
     return Response.json({ error: err.message }, { status: 500 })
   }
 }
